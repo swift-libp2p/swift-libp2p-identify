@@ -103,7 +103,9 @@ extension Identify {
     internal func consumeIdentifyMessage(payload:Data, id:String?, connection: Connection) {
         
         do {
+            /// Ensure the Payload is an IdentifyMessage
             let remoteIdentify = try IdentifyMessage(contiguousBytes: payload)
+            /// and that is valid
             let signedEnvelope = try SealedEnvelope(marshaledEnvelope: remoteIdentify.signedPeerRecord.bytes, verifiedWithPublicKey: remoteIdentify.publicKey.bytes)
             let peerRecord = try PeerRecord(marshaledData: Data(signedEnvelope.rawPayload), withPublicKey: remoteIdentify.publicKey)
             
@@ -113,7 +115,7 @@ extension Identify {
             connection.logger.trace("Identify::Updating PeerStore with Identified Peer")
             self.updateIdentifiedPeerInPeerStore(peerRecord, identifyMessage: remoteIdentify, connection: connection)
             
-            //self.application.publish(.peerIdentified(IdentifiedPeer(peer: peerRecord.peerID, identity: remoteIdentify))
+            /// Publish the identifiedPeer event
             self.application?.events.post(.identifiedPeer(IdentifiedPeer(peer: peerRecord.peerID, identity: try! remoteIdentify.serializedData().bytes)))
             
             connection.logger.trace("Identify::Successfully Identified Remote Peer using the Identify Protocol")
