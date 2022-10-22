@@ -80,14 +80,7 @@ public final class Identify: IdentityManager, CustomStringConvertible {
     internal func onNewConnection(_ connection:Connection) -> Void {
         // Take this opportunity to request an Identify Message from the remote peer...
         connection.logger.trace("Identify::New Upgraded Connection, Attempting to Identify Remote Peer...")
-        
-        guard let connection = connection as? BasicConnectionLight else {
-            connection.logger.warning("Identify::TODO:: FIX ME!! I only work with BasicConnectionLights")
-            return
-        }
-        
         // Open a new stream requesting the remote peer send us an Identify message
-        connection.logger.trace("Identify::Attempting to open outbound /ipfs/id/1.0.0 stream")
         // Calling newStream() without a closure/handler defaults to our registered route responder
         connection.newStream(forProtocol: "/ipfs/id/1.0.0")
     }
