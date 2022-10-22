@@ -7,7 +7,7 @@
 
 import LibP2P
 
-internal func handlePingRequest(_ req:Request) -> ResponseType<ByteBuffer> {
+internal func handlePingRequest(_ req:Request) -> Response<ByteBuffer> {
     switch req.streamDirection {
     case .inbound:
         switch req.event {

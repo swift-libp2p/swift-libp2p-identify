@@ -7,7 +7,7 @@
 
 import LibP2P
 
-internal func handleIDRequest(_ req:Request) -> ResponseType<ByteBuffer> {
+internal func handleIDRequest(_ req:Request) -> Response<ByteBuffer> {
     switch req.event {
     case .ready:
         guard req.streamDirection == .inbound else {

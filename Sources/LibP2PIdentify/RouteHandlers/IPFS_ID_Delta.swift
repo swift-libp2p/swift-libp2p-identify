@@ -7,7 +7,7 @@
 
 import LibP2P
 
-internal func handleDeltaRequest(_ req:Request) -> ResponseType<ByteBuffer> {
+internal func handleDeltaRequest(_ req:Request) -> Response<ByteBuffer> {
     guard req.streamDirection == .inbound else {
         req.logger.error("Identify::Delta::Error - We dont support outbound /ipfs/id/delta messages on this handler")
         return .close
