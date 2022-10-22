@@ -135,6 +135,37 @@ extension Identify {
 }
 
 extension Identify {
+    /// Handles inbound IdentifyMessage parsing
+    ///
+    /// - Ensures the message is signed by the correct / expected remote peer
+    /// - Updates our peerstore with the metadata within the peer record
+    internal func consumePushIdentifyMessage(payload:Data, id:String?, connection: Connection) {
+        do {
+            /// Ensure the Payload is an IdentifyMessage
+            let remoteIdentify = try IdentifyMessage(contiguousBytes: payload)
+            /// and that is valid
+            let signedEnvelope = try SealedEnvelope(marshaledEnvelope: remoteIdentify.signedPeerRecord.bytes, verifiedWithPublicKey: remoteIdentify.publicKey.bytes)
+            let peerRecord = try PeerRecord(marshaledData: Data(signedEnvelope.rawPayload), withPublicKey: remoteIdentify.publicKey)
+
+            connection.logger.debug("Identify::Push::\n\(signedEnvelope)")
+            connection.logger.debug("Identify::Push::\n\(peerRecord)")
+
+            connection.logger.trace("Identify::Push::Updating PeerStore with Identified Peer")
+            self.updateIdentifiedPeerInPeerStore(peerRecord, identifyMessage: remoteIdentify, connection: connection)
+
+            connection.logger.trace("Identify::Push::Successfully Updated Identified Remote Peer using the Identify Push Protocol")
+
+            return
+        } catch {
+            connection.logger.warning("Identify::Push::Failed to consume Remote IdentifyMessage -> \(error)")
+            connection.logger.trace("\(payload)")
+            return
+        }
+    }
+}
+
+
+extension Identify {
     /// Constructs an IdentifyMessage that represents our applications current state.
     ///
     /// - This message is ready to be sent to a remote peer who's opened a new `/ipfs/id/1.0.0` stream on our connection
