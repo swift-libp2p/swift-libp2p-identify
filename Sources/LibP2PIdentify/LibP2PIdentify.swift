@@ -217,7 +217,14 @@ extension Identify {
         
         // Update our peers listening addresses
         let listeningAddresses = identifyMessage.listenAddrs.compactMap { multiaddrData -> Multiaddr? in
-            try? Multiaddr(multiaddrData).encapsulate(proto: .p2p, address: identifiedPeer.b58String)
+            if let ma = try? Multiaddr(multiaddrData) {
+                if !ma.protocols().contains(.p2p) {
+                    return try? ma.encapsulate(proto: .p2p, address: identifiedPeer.b58String)
+                } else {
+                    return ma
+                }
+            }
+            return nil
         }
         tasks.append(application.peers.add(addresses: listeningAddresses, toPeer: identifiedPeer, on: connection.channel.eventLoop))
         
