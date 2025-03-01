@@ -30,9 +30,6 @@ Identify consists of a set of protocols used to help identify remote peers withi
 - /ipfs/ping
    - A ping protocol that allows for quick and easy pings to libp2p Peers for measuring latency, testing liveness/connectivity, etc.
 
-#### Heads up ‼️
-- This package is embedded into [swift-libp2p](https://github.com/swift-libp2p/swift-libp2p) . There's no need to include this package as a dependency in your swift-libp2p project.
-
 #### For more details see 
 - [Multiformats / Mulitbase Spec](https://github.com/multiformats/multibase/blob/master/README.md)
 
