@@ -9,5 +9,5 @@ jobs:
     name: Tests
     uses: swift-libp2p/github-workflows/.github/workflows/providers.yml@main
     with:
-      # TODO: Add integration tests 
+      # TODO: Add integration tests
       dependents: "[]"
