@@ -364,7 +364,7 @@ extension Identify {
     // - TODO:  This doesn't handle multiple parallel outbound pings to the same peer
     func initiateOutboundPingTo(peer: PeerID) -> EventLoopFuture<TimeAmount> {
         el.flatSubmit {
-            if let outstandingPing = self.pingCache[peer.bytes] {
+            if let outstandingPing = self.pingCache[peer.id] {
                 // If the outstanding ping has been in flight for more than 3 seconds, fail the promise
                 if DispatchTime.now().uptimeNanoseconds - outstandingPing.startTime > 3_000_000_000 {
                     print("We have an outstanding ping thats older than 3 seconds")
@@ -373,11 +373,11 @@ extension Identify {
                     // If the outstanding ping hasn't timed out yet, just return the results of the existing promise
                     return promise.futureResult
                 }
-                self.pingCache.removeValue(forKey: peer.bytes)
+                self.pingCache.removeValue(forKey: peer.id)
             }
             //guard self.pingCache[peer.bytes] == nil else { return application!.eventLoopGroup.next().makeFailedFuture(Errors.timedOut) }
             let promise = self.application!.eventLoopGroup.next().makePromise(of: TimeAmount.self)
-            self.pingCache[peer.bytes] = PendingPing(
+            self.pingCache[peer.id] = PendingPing(
                 peer: "",
                 startTime: DispatchTime.now().uptimeNanoseconds,
                 promise: promise
@@ -394,7 +394,7 @@ extension Identify {
                 self.logger.warning("Identify::Failed to ping addr `\(addr)`. A valid peerID is neccessary")
                 return self.el.makeFailedFuture(Errors.timedOut)
             }
-            if let outstandingPing = self.pingCache[peer.bytes] {
+            if let outstandingPing = self.pingCache[peer.id] {
                 // If the outstanding ping has been in flight for more than 3 seconds, fail the promise
                 if DispatchTime.now().uptimeNanoseconds - outstandingPing.startTime > 3_000_000_000 {
                     print("We have an outstanding ping thats older than 3 seconds")
@@ -403,11 +403,11 @@ extension Identify {
                     // If the outstanding ping hasn't timed out yet, just return the results of the existing promise
                     return promise.futureResult
                 }
-                self.pingCache.removeValue(forKey: peer.bytes)
+                self.pingCache.removeValue(forKey: peer.id)
             }
             //guard self.pingCache[peer.bytes] == nil else { return application!.eventLoopGroup.next().makeFailedFuture(Errors.timedOut) }
             let promise = self.application!.eventLoopGroup.next().makePromise(of: TimeAmount.self)
-            self.pingCache[peer.bytes] = PendingPing(
+            self.pingCache[peer.id] = PendingPing(
                 peer: "",
                 startTime: DispatchTime.now().uptimeNanoseconds,
                 promise: promise
