@@ -414,18 +414,6 @@ final class LibP2PIdentifyTests: XCTestCase {
         XCTAssertEqual(latency1, latency2)
         XCTAssertEqual(latency2, latency3)
     }
-
-    static var allTests = [
-        ("testIPFSIdentifyPayload", testIPFSIdentifyPayload),
-        ("testIPFSIdentifyPushPayloadJSClient", testIPFSIdentifyPushPayloadJSClient),
-        ("testIDPushRecordDecoding", testIDPushRecordDecoding),
-        ("testLibP2PInternalPingMultiaddr", testLibP2PInternalPingMultiaddr),
-        ("testLibP2PInternalPingPeer", testLibP2PInternalPingPeer),
-        (
-            "testLibP2PInternalPingPeerCascadeMultipleInflightPings",
-            testLibP2PInternalPingPeerCascadeMultipleInflightPings
-        ),
-    ]
 }
 
 struct Fixtures {
