@@ -96,13 +96,10 @@ struct LibP2PIdentifyTests {
 
         let application = Application(.testing)
 
-        class EventHandler {}
-        let eventHandler = EventHandler()
-
         /// Ensure our identifiedPeer Events are being fired correctly
         var peerUpdateEvents: Int = 0
         application.events.on(
-            eventHandler,
+            application,
             event: .remotePeerProtocolChange({ _ in
                 peerUpdateEvents += 1
             })
