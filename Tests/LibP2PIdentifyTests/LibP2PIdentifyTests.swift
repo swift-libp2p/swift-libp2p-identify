@@ -14,33 +14,36 @@
 
 import LibP2PMPLEX
 import LibP2PNoise
-import XCTest
+import Testing
 
 @testable import LibP2P
 @testable import LibP2PIdentify
 
-final class LibP2PIdentifyTests: XCTestCase {
+@Suite("Libp2p Identify Tests", .serialized)
+struct LibP2PIdentifyTests {
 
-    func testIPFSIdentifyPayload() throws {
+    @Test func testIPFSIdentifyPayload() throws {
         let payloadString =
             "0aab04080012a60430820222300d06092a864886f70d01010105000382020f003082020a0282020100a1f5c0e7c0d5e556afc0e84566f8c565773adb548ddc219ca9688613a0096c2dfd069804c84968545b9c9df19dd131cc8408b7781df7ddfaf208a42a821523ce03955164a62dcab6bd10dd26f8507517567ca128f00a056d8636b9549ddb59ca727628775c90bd91d6251adbdfd36bf68a09c3bfe69e1b1587e8f31a4b55afc8095e7b6f6683165f9c0ef0ad1b22d8b73749ee02aa46566cd5f7a9ff6eb1099fe36b363abd4e1293108a6d473a349e77aca15e49b20ffe61b4222eb3a634e8481d71a7fdceea88a2044fa5cedde1dee314e27880bc713ca578814684e85e0d21cff40e23c341f13ee1a06452f284664999862973e51d692b578cd9b7de89d786ad6baebcf8dfc343db8eda434a15929591917c52bf16741359149d0e7092bc919928f1d5b25cb48b0f90a7a05b0eb29adca993f893c6fb137a53a5c470a8a309b574bb4fd80879bde7dcc237eaf2ce9a17b9193032df99c8bf551987561ee264a09730f9029610571625e0d0e1e2a7f90469a6a480ed08cf9b4c3af0567bfe9abf470079d8cc7d7f22efc83598f86c9e0678caf79e2299a99c47c8d057e7f3b8af40185c8dd499a1c167c358d7ab83af6581944ce0b8b6bd2cfe4bf80c8c9e7f61fe94816df79e12ae5e82c588f894b86fd599da5912f8754de2a23f2d1529845a5570a72d8d8537325b95dd3c69d9ca30b8186c20170d10955b7da216822c73020301000112080468838352060fa1120b046883835291020fa1cc03120b046883835291020fa1cd031257046883835291020fa1cd03d103d203221220a78c594f830726e17fba30224d448d5c4a4434e9e5a14f24b3822d14da46d19bd203221220855beff35231e37b3c4970b3e16e0e100eba09adc3e1ad5473a16c97f258b61e1257046883835291020fa1cd03d103d203221220a78c594f830726e17fba30224d448d5c4a4434e9e5a14f24b3822d14da46d19bd203221220855beff35231e37b3c4970b3e16e0e100eba09adc3e1ad5473a16c97f258b61e1a0d2f697066732f626974737761701a132f697066732f626974737761702f312e302e301a132f697066732f626974737761702f312e312e301a132f697066732f626974737761702f312e322e301a0e2f697066732f69642f312e302e301a132f697066732f69642f707573682f312e302e301a0f2f697066732f6b61642f312e302e301a132f697066732f6c616e2f6b61642f312e302e301a102f697066732f70696e672f312e302e301a152f6c69627032702f6175746f6e61742f312e302e301a1f2f6c69627032702f636972637569742f72656c61792f302e322e302f686f701a202f6c69627032702f636972637569742f72656c61792f302e322e302f73746f701a0d2f6c69627032702f64637574721a032f782f2208044caa3c8506e78a2a0a697066732f302e312e3032196b75626f2f302e32312e302d7263332f39663231636635333842cb0b0aab04080012a60430820222300d06092a864886f70d01010105000382020f003082020a0282020100a1f5c0e7c0d5e556afc0e84566f8c565773adb548ddc219ca9688613a0096c2dfd069804c84968545b9c9df19dd131cc8408b7781df7ddfaf208a42a821523ce03955164a62dcab6bd10dd26f8507517567ca128f00a056d8636b9549ddb59ca727628775c90bd91d6251adbdfd36bf68a09c3bfe69e1b1587e8f31a4b55afc8095e7b6f6683165f9c0ef0ad1b22d8b73749ee02aa46566cd5f7a9ff6eb1099fe36b363abd4e1293108a6d473a349e77aca15e49b20ffe61b4222eb3a634e8481d71a7fdceea88a2044fa5cedde1dee314e27880bc713ca578814684e85e0d21cff40e23c341f13ee1a06452f284664999862973e51d692b578cd9b7de89d786ad6baebcf8dfc343db8eda434a15929591917c52bf16741359149d0e7092bc919928f1d5b25cb48b0f90a7a05b0eb29adca993f893c6fb137a53a5c470a8a309b574bb4fd80879bde7dcc237eaf2ce9a17b9193032df99c8bf551987561ee264a09730f9029610571625e0d0e1e2a7f90469a6a480ed08cf9b4c3af0567bfe9abf470079d8cc7d7f22efc83598f86c9e0678caf79e2299a99c47c8d057e7f3b8af40185c8dd499a1c167c358d7ab83af6581944ce0b8b6bd2cfe4bf80c8c9e7f61fe94816df79e12ae5e82c588f894b86fd599da5912f8754de2a23f2d1529845a5570a72d8d8537325b95dd3c69d9ca30b8186c20170d10955b7da216822c730203010001120203011a93030a221220b04a57d40eca138809f139a76b12044333c3740391c9bf1ce9d8e21a79210bfd10b38ba6afbab1bab9171a0a0a080468838352060fa11a0d0a0b046883835291020fa1cc031a0d0a0b046883835291020fa1cd031a590a57046883835291020fa1cd03d103d203221220a78c594f830726e17fba30224d448d5c4a4434e9e5a14f24b3822d14da46d19bd203221220855beff35231e37b3c4970b3e16e0e100eba09adc3e1ad5473a16c97f258b61e1a590a57046883835291020fa1cd03d103d203221220a78c594f830726e17fba30224d448d5c4a4434e9e5a14f24b3822d14da46d19bd203221220855beff35231e37b3c4970b3e16e0e100eba09adc3e1ad5473a16c97f258b61e1a0a0a08047f000001060fa11a0d0a0b047f00000191020fa1cc031a0d0a0b047f00000191020fa1cd031a590a57047f00000191020fa1cd03d103d203221220a78c594f830726e17fba30224d448d5c4a4434e9e5a14f24b3822d14da46d19bd203221220855beff35231e37b3c4970b3e16e0e100eba09adc3e1ad5473a16c97f258b61e2a8004089547ae16ad9517e74d09c8280fcb8e305875cd5614964e95629660de26415a41a20ce232d448d5cbb2c245c6646c03e8ec5082277fcb612dc44d11efff4a3443b2690fd8abe011534e325bac89c9aeb5b832011c0ace99e29307bf37e790201625e33d11697c81d33e7e703d613d787cef34634b1870a4209b50b0bdf7e93bee1d954ab86e767373d524e59971da4ed63a1b330ca95ebaa0f4ba3667407e8f1e48f28008d10d510a03f79bece87b8a9b540ecb00a7cca06165ecd669d7ca51a3aa47436c77f53933e573fecee192519275638dcb068f4271cfc821684e2050969b3603473404cdb510b9cba00dfa7d74ec0bbd60e2898cd0efdd167ca137468ebeccb81d3e18725ea63c747c04de5a49cf974d36c4380bf16643b3b232e5f204d48494c18d82fb891d02416344b9f82d9e02909b7658bac1451dd685b2baf89e11e2ad4629f9b6ed0f791ae483a11f312b0370d73c008ed919addc22247e2935679868b4f80414c268b2756e6a65eb14e3de43b4213acdd676b1ba16ad168ead8500ce8c21074d5288672a3c3e600db5e1bb834f818e719752f09a2219fcaf8db2df74903429590cfdd59ccfed4e08baf47812261ae789437d876a7e8b252862aaed6dabf8484b25bc318b0ac8261833fa4599abb5b0fbc1c0755badaec2adbe09ae3444a02cbc09f2c6a4f8f3ea977af8c1ec0c1c015faaaf63bf7e7b14ff"
 
         let payload = [UInt8](hex: payloadString)
 
-        let identifyProto = try LibP2PIdentify.IdentifyMessage(contiguousBytes: payload)
+        let identifyProto = try LibP2PIdentify.IdentifyMessage(serializedBytes: payload)
 
         for address in identifyProto.listenAddrs {
-            XCTAssertNoThrow(try Multiaddr(address), "Failed to decode multiaddr '\(address.toHexString())'")
+            #expect(throws: Never.self, "Failed to decode multiaddr '\(address.toHexString())'") {
+                try Multiaddr(address)
+            }
         }
-        XCTAssertEqual(identifyProto.listenAddrs.count, 5)
+        #expect(identifyProto.listenAddrs.count == 5)
 
         for proto in identifyProto.protocols {
-            XCTAssertNotNil(SemVerProtocol(proto), "Failed to decode protocol '\(proto)'")
+            #expect(SemVerProtocol(proto) != nil, "Failed to decode protocol '\(proto)'")
         }
-        XCTAssertEqual(identifyProto.protocols.count, 14)
+        #expect(identifyProto.protocols.count == 14)
     }
 
-    func testIPFSIdentifyPushPayloadJSClient() throws {
+    @Test func testIPFSIdentifyPushPayloadJSClient() throws {
         /// An example /ipfs/id/push/1.0.0 payload from a JS Client
         let payloadString =
             "a7061208047f00000106c223120804c0a8011706c223120804c0a8011606c2231208044caa3c850688fc1208044caa3c850686601a1b2f6c69627032702f636972637569742f72656c61792f302e312e301a0e2f697066732f69642f312e302e301a132f697066732f69642f707573682f312e302e301a102f697066732f70696e672f312e302e30429e050aab02080012a60230820122300d06092a864886f70d01010105000382010f003082010a02820101009a3520ce8cfcfa4fc1d9b1fecb0e9c6241188dd8e8dec881d44b4e69f1058eaf710550216c0b7d51e26a22844e4737e17135a954cb215953fff28dfd6976794c26aad507225231afb2db2e31d85b9ca680803bded3c7e896cf0959d945c451733563cd6684f6de597cbec0fdb11254e02044744ec9ffb61a00d120f6bbdc09b95bccedd07b701707626a95e891fe29609e7514ee9ba3b506cb2a3ffe0b6e6dbeae4adb678fa8551a14d8344ba0584aab0a8bb7296b6ee8f85ce2375f290c5d5e7eb905f3d49cee6cd381f65b1ce8af9e442fb0f218610ee14c833919e2aa260a7c77ba13baeca68809df32aaa05ae8f27ff9f04ce57938863c91e346f071fe350203010001120203011a670a221220add8ac59b1fe19f20dfaa2228c239e3c131d73e0a7848ac869d5eb959a27ec6c10a5d9c6f28b301a0a0a08047f00000106c2231a0a0a0804c0a8011706c2231a0a0a0804c0a8011606c2231a0a0a08044caa3c850688fc1a0a0a08044caa3c850686602a800228a3216af2fd7701d4cc0014d5fc410a8423a21170b2784516d7740405c7bf903cd7ed837725e857680c0cb0dbaf6fc4f95d7fe692872f16417e8fcfaad3cdd3b529e8fb224ba3a0cabdc36bee1f77ab013aa35beae0e46c4bf4e438ffad4a2fa558b43323a2526547bb47935ea1f3ea9fa67dc8bd51160f4a9875717ec146f0ef293cd4892e0395b042e6e7f0fd0af9babb06e1527ee0f11b50671d7a190877d354abe11e32c607c7492598b37a29c35925c43b89f5a4e92e97b1973ecaa1027714e2439ffe27b390e31d4763d6b5fe637c95848e8832f1bb7ec4de20ee9b767286661a8d0aeeedf5cdb97e639fa530b237a2914459e173fb2aad3363d8bb08"
@@ -50,53 +53,56 @@ final class LibP2PIdentifyTests: XCTestCase {
         let lengthPrefix = uVarInt(payload)
 
         let identifyProto = try? LibP2PIdentify.IdentifyMessage(
-            contiguousBytes: payload.dropFirst(lengthPrefix.bytesRead)
+            serializedBytes: payload.dropFirst(lengthPrefix.bytesRead)
         )
 
-        XCTAssertNotNil(identifyProto)
+        #expect(identifyProto != nil)
 
         for addy in identifyProto!.listenAddrs {
-            XCTAssertNoThrow(try Multiaddr(addy))
+            #expect(throws: Never.self) { try Multiaddr(addy) }
         }
-        XCTAssertEqual(identifyProto?.listenAddrs.count, 5)
+        #expect(identifyProto?.listenAddrs.count == 5)
 
         for proto in identifyProto!.protocols {
-            XCTAssertNotNil(SemVerProtocol(proto))
+            #expect(SemVerProtocol(proto) != nil)
         }
-        XCTAssertEqual(identifyProto?.protocols.count, 4)
+        #expect(identifyProto?.protocols.count == 4)
 
         // Try and decode the Sealed Envelope containing the Signed PeerRecord
         // We should use the public key that we have on file to verify the signedEnvelope
         guard
             let signedEnvelope = try? SealedEnvelope(
-                marshaledEnvelope: identifyProto!.signedPeerRecord.bytes,
+                marshaledEnvelope: identifyProto!.signedPeerRecord.byteArray,
                 verifiedWithPublicKey: nil
             )
         else {
-            XCTFail("Identify::Failed to decode Envelope containing PeerRecord")
+            Issue.record("Identify::Failed to decode Envelope containing PeerRecord")
             return
         }
         //print("\n\(signedEnvelope)")
 
         // Try and decode the PeerRecord (passing in the publicKey data so we get a pubkey PeerID, instead of an idOnly PeerID)
         guard let peerRecord = try? PeerRecord(marshaledData: Data(signedEnvelope.rawPayload)) else {
-            XCTFail("Identify::Failed to decode Peer Record")
+            Issue.record("Identify::Failed to decode Peer Record")
             return
         }
 
         print(peerRecord)
 
-        XCTAssertEqual(peerRecord.peerID.b58String, "Qma3GsJmB47xYuyahPZPSadh1avvxfyYQwk8R3UnFrQ6aP")
+        #expect(peerRecord.peerID.b58String == "Qma3GsJmB47xYuyahPZPSadh1avvxfyYQwk8R3UnFrQ6aP")
     }
 
-    func testIDPushRecordDecoding() throws {
+    @Test func testIDPushRecordDecoding() throws {
 
         let application = Application(.testing)
+
+        class EventHandler {}
+        let eventHandler = EventHandler()
 
         /// Ensure our identifiedPeer Events are being fired correctly
         var peerUpdateEvents: Int = 0
         application.events.on(
-            self,
+            eventHandler,
             event: .remotePeerProtocolChange({ _ in
                 peerUpdateEvents += 1
             })
@@ -105,10 +111,10 @@ final class LibP2PIdentifyTests: XCTestCase {
         for hexRecord in Fixtures.PushRecords {
             let payload = [UInt8](hex: hexRecord)
 
-            let identifyProto = try LibP2PIdentify.IdentifyMessage(contiguousBytes: payload)
+            let identifyProto = try LibP2PIdentify.IdentifyMessage(serializedBytes: payload)
             let signedEnvelope = try SealedEnvelope(
-                marshaledEnvelope: identifyProto.signedPeerRecord.bytes,
-                verifiedWithPublicKey: identifyProto.publicKey.bytes
+                marshaledEnvelope: identifyProto.signedPeerRecord.byteArray,
+                verifiedWithPublicKey: identifyProto.publicKey.byteArray
             )
             let peerRecord = try PeerRecord(
                 marshaledData: Data(signedEnvelope.rawPayload),
@@ -119,8 +125,6 @@ final class LibP2PIdentifyTests: XCTestCase {
             //print(signedEnvelope)
             //print(peerRecord)
             //print((try? Multiaddr(identifyProto.observedAddr)) ?? "NIL")
-
-            XCTAssertNotNil(identifyProto)
 
             updateIdentifiedPeerInPeerStore(peerRecord, identifyMessage: identifyProto)
         }
@@ -163,7 +167,7 @@ final class LibP2PIdentifyTests: XCTestCase {
                 tasks.append(
                     application.peers.add(
                         metaKey: .AgentVersion,
-                        data: agentVersion.bytes,
+                        data: agentVersion.byteArray,
                         toPeer: identifiedPeer,
                         on: eventLoop
                     )
@@ -176,7 +180,7 @@ final class LibP2PIdentifyTests: XCTestCase {
                 tasks.append(
                     application.peers.add(
                         metaKey: .ProtocolVersion,
-                        data: protocolVersion.bytes,
+                        data: protocolVersion.byteArray,
                         toPeer: identifiedPeer,
                         on: eventLoop
                     )
@@ -189,7 +193,7 @@ final class LibP2PIdentifyTests: XCTestCase {
                 tasks.append(
                     application.peers.add(
                         metaKey: .ObservedAddress,
-                        data: ma.bytes,
+                        data: ma.byteArray,
                         toPeer: identifiedPeer,
                         on: eventLoop
                     )
@@ -226,27 +230,27 @@ final class LibP2PIdentifyTests: XCTestCase {
 
         print("Added \(Fixtures.PushRecords.count) Push ID Records to our PeerStore")
         print("Peer Count: \((try? application.peers.count().wait()) ?? -1)")
-        XCTAssertEqual(Fixtures.PushRecords.count, 16)
-        XCTAssertEqual(try! application.peers.count().wait(), 7)
+        #expect(Fixtures.PushRecords.count == 16)
+        #expect(try! application.peers.count().wait() == 7)
 
         /// Ensure we received the correct number of updates
-        XCTAssertEqual(peerUpdateEvents, 16)
+        #expect(peerUpdateEvents == 16)
 
         /// Instantiate a peer from the test fixtures
         let aRemotePeer = try PeerID(cid: "QmRYiTAVhmPUuE6dnLa2vQGH6pQvUatKJtGFtDRc9bAkeQ")
         /// Fetch the Records for the remote peer
         let remotePeerRecords = try application.peers.getRecords(forPeer: aRemotePeer, on: nil).wait()
-        XCTAssertGreaterThan(remotePeerRecords.count, 0)
+        #expect(remotePeerRecords.count > 0)
         let latestPeerRecord = try application.peers.getMostRecentRecord(forPeer: aRemotePeer, on: nil).wait()
-        XCTAssertEqual(latestPeerRecord?.sequenceNumber, 1_663_285_097_713_605_627)
+        #expect(latestPeerRecord?.sequenceNumber == 1_663_285_097_713_605_627)
 
         /// Trim the Records for the remote peer
         try application.peers.trimRecords(forPeer: aRemotePeer, on: nil).wait()
         /// And ensure that the latest Record was kept
         let remotePeerRecordsAfter = try application.peers.getRecords(forPeer: aRemotePeer, on: nil).wait()
-        XCTAssertEqual(remotePeerRecordsAfter.count, 1)
+        #expect(remotePeerRecordsAfter.count == 1)
         let latestPeerRecordAfter = try application.peers.getMostRecentRecord(forPeer: aRemotePeer, on: nil).wait()
-        XCTAssertEqual(latestPeerRecordAfter?.sequenceNumber, 1_663_285_097_713_605_627)
+        #expect(latestPeerRecordAfter?.sequenceNumber == 1_663_285_097_713_605_627)
 
         //application.peers.dumpAll()
 
@@ -255,22 +259,9 @@ final class LibP2PIdentifyTests: XCTestCase {
         application.shutdown()
     }
 
-    func testLibP2PInternalPingMultiaddr() throws {
-        let app1 = Application(.testing)
-        let app2 = Application(.testing)
-
-        app1.connectionManager.use(connectionType: BasicConnectionLight.self)
-        //app2.connectionManager.use(connectionType: BasicConnectionLight.self)
-
-        app1.muxers.use(.mplex)
-        app2.muxers.use(.mplex)
-        app1.security.use(.noise)
-        app2.security.use(.noise)
-        app1.servers.use(.tcp(host: "0.0.0.0", port: 10000))
-        app2.servers.use(.tcp(host: "0.0.0.0", port: 10001))
-
-        app1.logger.logLevel = .notice
-        app2.logger.logLevel = .notice
+    @Test func testLibP2PInternalPingMultiaddr() throws {
+        let app1 = createHost(port: 10_000)
+        let app2 = createHost(port: 10_001)
 
         defer {
             app1.shutdown()
@@ -279,40 +270,35 @@ final class LibP2PIdentifyTests: XCTestCase {
 
         try app1.start()
         try app2.start()
-
-        let pingExpectation = expectation(description: "Received Ping From App2")
 
         let ma = try Multiaddr(app2.listenAddresses.first!.description + "/p2p/" + app2.peerID.b58String)
 
-        app1.identify.ping(addr: ma).whenComplete { result in
-            switch result {
-            case .success(let latency):
-                print("Latency: \(latency.nanoseconds) ns")
-            case .failure(let error):
-                XCTFail("\(error)")
-            }
-            pingExpectation.fulfill()
-        }
+        let latency = try app1.identify.ping(addr: ma).wait()
 
-        waitForExpectations(timeout: 4.0)
+        print("Latency: \(latency.nanoseconds) ns")
+        #expect(latency.nanoseconds >= 0)
     }
 
-    func testLibP2PInternalPingPeer() throws {
-        let app1 = Application(.testing)
-        let app2 = Application(.testing)
+    @Test func testLibP2PInternalPingMultiaddr_Async() async throws {
+        let app1 = createHost(port: 10_000)
+        let app2 = createHost(port: 10_001)
 
-        app1.connectionManager.use(connectionType: BasicConnectionLight.self)
-        //app2.connectionManager.use(connectionType: BasicConnectionLight.self)
+        try await app1.startup()
+        try await app2.startup()
 
-        app1.muxers.use(.mplex)
-        app2.muxers.use(.mplex)
-        app1.security.use(.noise)
-        app2.security.use(.noise)
-        app1.servers.use(.tcp(host: "0.0.0.0", port: 10000))
-        app2.servers.use(.tcp(host: "0.0.0.0", port: 10001))
+        let ma = try app2.listenAddresses.first!.encapsulate(proto: .p2p, address: app2.peerID.b58String)
 
-        app1.logger.logLevel = .notice
-        app2.logger.logLevel = .notice
+        let ping = try await app1.identify.ping(addr: ma)
+        print("Latency: \(ping.nanoseconds) ns")
+        #expect(ping.nanoseconds >= 0)
+
+        try await app1.asyncShutdown()
+        try await app2.asyncShutdown()
+    }
+
+    @Test func testLibP2PInternalPingPeer() throws {
+        let app1 = createHost(port: 10_000)
+        let app2 = createHost(port: 10_001)
 
         defer {
             app1.shutdown()
@@ -322,97 +308,113 @@ final class LibP2PIdentifyTests: XCTestCase {
         try app1.start()
         try app2.start()
 
-        let pingExpectation = expectation(description: "Received Ping From App2")
-
         try app1.peers.add(peerInfo: app2.peerInfo).wait()
 
-        app1.identify.ping(peer: app2.peerID).whenComplete { result in
-            switch result {
-            case .success(let latency):
-                print("Latency1: \(latency.nanoseconds) ns")
-            case .failure(let error):
-                XCTFail("\(error)")
-            }
-            pingExpectation.fulfill()
-        }
-
-        waitForExpectations(timeout: 4.0)
+        let ping = try app1.identify.ping(peer: app2.peerID).wait()
+        print("Latency: \(ping.nanoseconds) ns")
+        #expect(ping.nanoseconds >= 0)
     }
 
-    func testLibP2PInternalPingPeerCascadeMultipleInflightPings() throws {
-        let app1 = Application(.testing)
-        let app2 = Application(.testing)
+    @Test func testLibP2PInternalPingPeer_Async() async throws {
+        let app1 = createHost(port: 10_000)
+        let app2 = createHost(port: 10_001)
+
+        try await app1.startup()
+        try await app2.startup()
+
+        try await app1.peers.add(peerInfo: app2.peerInfo)
+
+        let ping = try await app1.identify.ping(peer: app2.peerID)
+        print("Latency: \(ping.nanoseconds) ns")
+        #expect(ping.nanoseconds >= 0)
+
+        try await app1.asyncShutdown()
+        try await app2.asyncShutdown()
+    }
+
+    @Test func testLibP2PInternalPingPeerCascadeMultipleInflightPings() async throws {
+        let app1 = createHost(port: 10_000)
+        let app2 = createHost(port: 10_001)
 
         app1.connectionManager.use(connectionType: BasicConnectionLight.self)
         //app2.connectionManager.use(connectionType: BasicConnectionLight.self)
 
-        app1.muxers.use(.mplex)
-        app2.muxers.use(.mplex)
-        app1.security.use(.noise)
-        app2.security.use(.noise)
-        app1.servers.use(.tcp(host: "0.0.0.0", port: 10000))
-        app2.servers.use(.tcp(host: "0.0.0.0", port: 10001))
+        try await app1.startup()
+        try await app2.startup()
 
-        app1.logger.logLevel = .notice
-        app2.logger.logLevel = .notice
+        try await app1.peers.add(peerInfo: app2.peerInfo)
 
-        defer {
-            app1.shutdown()
-            app2.shutdown()
-        }
+        // Note: These pings happen concurrently
+        async let latency1 = app1.identify.ping(peer: app2.peerID)
+        async let latency2 = app1.identify.ping(peer: app2.peerID)
+        async let latency3 = app1.identify.ping(peer: app2.peerID)
 
-        try app1.start()
-        try app2.start()
+        // Even when we await them like this here...
+        let ping1 = try await latency1
+        let ping2 = try await latency2
+        let ping3 = try await latency3
 
-        let pingExpectation1 = expectation(description: "Received Ping1 From App2")
-        let pingExpectation2 = expectation(description: "Received Ping2 From App2")
-        let pingExpectation3 = expectation(description: "Received Ping3 From App2")
+        let connectionCount = try await app1.connectionManager.getTotalConnectionCount().get()
+        let streamCount = try await app1.connectionManager.getTotalStreamCount().get()
 
-        try app1.peers.add(peerInfo: app2.peerInfo).wait()
+        print("Connection Count: \(connectionCount)")
+        print("Stream Count: \(streamCount)")
 
-        var latency1: TimeAmount?
-        var latency2: TimeAmount?
-        var latency3: TimeAmount?
+        #expect(connectionCount == 1)
+        // 2 streams for ID protocol and 1 stream for all three pings
+        #expect(streamCount == 3)
+        // All of the pings should be indentical because all three calls where cascaded into one
+        #expect(ping1 == ping2)
+        #expect(ping2 == ping3)
 
-        app1.identify.ping(peer: app2.peerID).whenComplete { result in
-            switch result {
-            case .success(let latency):
-                print("Latency1: \(latency.nanoseconds) ns")
-                latency1 = latency
-            case .failure(let error):
-                XCTFail("\(error)")
-            }
-            pingExpectation1.fulfill()
-        }
-        app1.identify.ping(peer: app2.peerID).whenComplete { result in
-            switch result {
-            case .success(let latency):
-                print("Latency2: \(latency.nanoseconds) ns")
-                latency2 = latency
-            case .failure(let error):
-                XCTFail("\(error)")
-            }
-            pingExpectation2.fulfill()
-        }
-        app1.identify.ping(peer: app2.peerID).whenComplete { result in
-            switch result {
-            case .success(let latency):
-                print("Latency3: \(latency.nanoseconds) ns")
-                latency3 = latency
-            case .failure(let error):
-                XCTFail("\(error)")
-            }
-            pingExpectation3.fulfill()
-        }
+        try await app1.asyncShutdown()
+        try await app2.asyncShutdown()
+    }
 
-        waitForExpectations(timeout: 4.0)
+    @Test func testLibP2PInternalPingPeerSequentialPingsUseSameConnection() async throws {
+        let app1 = createHost(port: 10_000)
+        let app2 = createHost(port: 10_001)
 
-        XCTAssertNotNil(latency1)
-        XCTAssertNotNil(latency2)
-        XCTAssertNotNil(latency3)
+        app1.connectionManager.use(connectionType: BasicConnectionLight.self)
 
-        XCTAssertEqual(latency1, latency2)
-        XCTAssertEqual(latency2, latency3)
+        try await app1.startup()
+        try await app2.startup()
+
+        try await app1.peers.add(peerInfo: app2.peerInfo)
+
+        // Note: These pings happen sequentially
+        let ping1 = try await app1.identify.ping(peer: app2.peerID)
+        let ping2 = try await app1.identify.ping(peer: app2.peerID)
+        let ping3 = try await app1.identify.ping(peer: app2.peerID)
+
+        let connectionCount = try await app1.connectionManager.getTotalConnectionCount().get()
+        let streamCount = try await app1.connectionManager.getTotalStreamCount().get()
+
+        print("Connection Count: \(connectionCount)")
+        print("Stream Count: \(streamCount)")
+
+        #expect(connectionCount == 1)
+        // 2 streams for ID protocol and 1 stream for each of the 3 pings
+        #expect(streamCount == 5)
+        // All three pings should be different because they happened sequentially
+        #expect(ping1 != ping2)
+        #expect(ping2 != ping3)
+
+        try await app1.asyncShutdown()
+        try await app2.asyncShutdown()
+    }
+}
+
+extension LibP2PIdentifyTests {
+    fileprivate func createHost(port: Int = 10_000, logLevel: Logger.Level = .notice) -> Application {
+        let host = Application(.testing)
+        host.muxers.use(.mplex)
+        host.security.use(.noise)
+        host.servers.use(.tcp(host: "0.0.0.0", port: port))
+
+        host.logger.logLevel = logLevel
+
+        return host
     }
 }
 
