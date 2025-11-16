@@ -44,7 +44,7 @@ let package = Package(
     ...
     dependencies: [
         ...
-        .package(url: "https://github.com/swift-libp2p/swift-libp2p-identify.git", .upToNextMajor(from: "0.0.1"))
+        .package(url: "https://github.com/swift-libp2p/swift-libp2p-identify.git", .upToNextMinor(from: "0.1.0"))
     ],
     ...
         .target(
@@ -74,14 +74,18 @@ app.identityManager.use(.default)
 ```Swift
 
 /// Manually ping a peer
-app.identify.ping(peer: PeerID).map { 
+app.identify.ping(peer: peerID).map { 
     print("Latency: \($0)")
 }
+// or asynchronously
+let ping = try await app.identify.ping(peer: peerID)
 
 /// Manually ping a multiaddr
-app.identify.ping(addr: Multiaddr).map { 
+app.identify.ping(addr: multiaddr).map { 
     print("Latency: \($0)")
 }
+// or asynchronously
+let ping = try await app.identify.ping(peer: multiaddr)
 
 ```
 
@@ -89,10 +93,12 @@ app.identify.ping(addr: Multiaddr).map {
 ```Swift
 
 /// Attempts to Ping a Peer, returns the time it took to receive a response.
-public func ping(peer:PeerID) -> EventLoopFuture<TimeAmount> 
+public func ping(peer: PeerID) -> EventLoopFuture<TimeAmount> 
+public func ping(peer: PeerID) async throws -> TimeAmount 
 
 /// Attempts to Ping a Multiaddr, returns the time it took to receive a response.
-public func ping(addr:Multiaddr) -> EventLoopFuture<TimeAmount>
+public func ping(addr: Multiaddr) -> EventLoopFuture<TimeAmount>
+public func ping(addr: Multiaddr) async throws -> TimeAmount
 
 ```
 
