@@ -35,8 +35,9 @@ Identify consists of a set of protocols used to help identify remote peers withi
 
 
 ## Install 
-#### Heads up ‼️
-- This package is embedded into [swift-libp2p](https://github.com/swift-libp2p/swift-libp2p) . There's no need to include this package as a dependency in your swift-libp2p project.
+> [!CAUTION]
+> This package is embedded into [swift-libp2p](https://github.com/swift-libp2p/swift-libp2p) . There's no need to include this package as a dependency in your swift-libp2p project.
+
 Include the following dependency in your Package.swift file
 ```Swift
 let package = Package(
@@ -57,8 +58,9 @@ let package = Package(
 ```
 
 ## Usage
-#### Heads up ‼️
-- This package is embedded into [swift-libp2p](https://github.com/swift-libp2p/swift-libp2p) . There's no need to include this package as a dependency in your swift-libp2p project.
+> [!CAUTION]
+> This package is embedded into [swift-libp2p](https://github.com/swift-libp2p/swift-libp2p) . There's no need to include this package as a dependency in your swift-libp2p project.
+
 ```Swift
 
 /// Tell swift-libp2p to use Identify (the standard swift-libp2p implementation does this automatically)
