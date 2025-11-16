@@ -78,7 +78,7 @@ public class PartialIdentifyMessageDecoder: ByteToMessageDecoder {
 
                 // Send the message's bytes up the pipeline to the next handler.
                 context.fireChannelRead(
-                    self.wrapInboundOut(ByteBuffer(bytes: try remoteIdentify.serializedData().bytes))
+                    self.wrapInboundOut(ByteBuffer(bytes: try remoteIdentify.serializedData().byteArray))
                 )
 
                 // We can keep going if you have more data.
