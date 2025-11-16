@@ -38,7 +38,7 @@ public class PartialIdentifyMessageDecoder: ByteToMessageDecoder {
         guard buffer.readableBytes > 0 else { return .needMoreData }
 
         //Try and decode the Identity Reponse
-        guard var remoteIdentify = try? IdentifyMessage(contiguousBytes: Data(buffer.readableBytesView)) else {
+        guard var remoteIdentify = try? IdentifyMessage(serializedBytes: Data(buffer.readableBytesView)) else {
             return .needMoreData
         }
 
