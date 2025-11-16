@@ -336,9 +336,6 @@ struct LibP2PIdentifyTests {
         let app1 = createHost(port: 10_000)
         let app2 = createHost(port: 10_001)
 
-        app1.connectionManager.use(connectionType: BasicConnectionLight.self)
-        //app2.connectionManager.use(connectionType: BasicConnectionLight.self)
-
         try await app1.startup()
         try await app2.startup()
 
@@ -374,8 +371,6 @@ struct LibP2PIdentifyTests {
     @Test func testLibP2PInternalPingPeerSequentialPingsUseSameConnection() async throws {
         let app1 = createHost(port: 10_000)
         let app2 = createHost(port: 10_001)
-
-        app1.connectionManager.use(connectionType: BasicConnectionLight.self)
 
         try await app1.startup()
         try await app2.startup()
