@@ -397,7 +397,7 @@ struct LibP2PIdentifyTests {
         try await app1.asyncShutdown()
         try await app2.asyncShutdown()
     }
-    
+
     @Test() func testInternalInterop() async throws {
         let host = try makeEchoHost(port: 10000)
         let client = try makeClient(port: 10001)
@@ -406,7 +406,7 @@ struct LibP2PIdentifyTests {
         try await client.startup()
 
         let message: Data = "Hello Swift LibP2P".data(using: .utf8)!
-        
+
         /// Fire off an echo request
         let response = try await client.newRequest(
             to: host.listenAddresses.first!.encapsulate(proto: .p2p, address: host.peerID.b58String),
@@ -422,7 +422,7 @@ struct LibP2PIdentifyTests {
         try await host.asyncShutdown()
         try await client.asyncShutdown()
     }
-    
+
     @Test(arguments: [10, 100, 1_000])
     func testInternalInteropMultipleRequests_Sequentially(_ numberOfRequests: Int) async throws {
         let host = try makeEchoHost(port: 10000)
@@ -457,7 +457,11 @@ struct LibP2PIdentifyTests {
 }
 
 extension LibP2PIdentifyTests {
-    fileprivate func makeEchoHost(port: Int, peerID: PeerID? = nil, logLevel: Logger.Level = .notice) throws -> Application {
+    fileprivate func makeEchoHost(
+        port: Int,
+        peerID: PeerID? = nil,
+        logLevel: Logger.Level = .notice
+    ) throws -> Application {
         let lib = try Application(.testing, peerID: peerID ?? PeerID(.Ed25519))
         lib.security.use(.noise)
         lib.muxers.use(.mplex)
@@ -481,7 +485,11 @@ extension LibP2PIdentifyTests {
         return lib
     }
 
-    fileprivate func makeClient(port: Int, peerID: PeerID? = nil, logLevel: Logger.Level = .notice) throws -> Application {
+    fileprivate func makeClient(
+        port: Int,
+        peerID: PeerID? = nil,
+        logLevel: Logger.Level = .notice
+    ) throws -> Application {
         let lib = try Application(.testing, peerID: peerID ?? PeerID(.Ed25519))
         lib.security.use(.noise)
         lib.muxers.use(.mplex)
