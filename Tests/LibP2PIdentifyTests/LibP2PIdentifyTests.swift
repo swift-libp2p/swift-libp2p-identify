@@ -257,8 +257,8 @@ struct LibP2PIdentifyTests {
     }
 
     @Test func testLibP2PInternalPingMultiaddr() throws {
-        let app1 = createHost(port: 10_000)
-        let app2 = createHost(port: 10_001)
+        let app1 = try makeClient(port: 10_000)
+        let app2 = try makeClient(port: 10_001)
 
         defer {
             app1.shutdown()
@@ -277,8 +277,8 @@ struct LibP2PIdentifyTests {
     }
 
     @Test func testLibP2PInternalPingMultiaddr_Async() async throws {
-        let app1 = createHost(port: 10_000)
-        let app2 = createHost(port: 10_001)
+        let app1 = try makeClient(port: 10_000)
+        let app2 = try makeClient(port: 10_001)
 
         try await app1.startup()
         try await app2.startup()
@@ -294,8 +294,8 @@ struct LibP2PIdentifyTests {
     }
 
     @Test func testLibP2PInternalPingPeer() throws {
-        let app1 = createHost(port: 10_000)
-        let app2 = createHost(port: 10_001)
+        let app1 = try makeClient(port: 10_000)
+        let app2 = try makeClient(port: 10_001)
 
         defer {
             app1.shutdown()
@@ -313,8 +313,8 @@ struct LibP2PIdentifyTests {
     }
 
     @Test func testLibP2PInternalPingPeer_Async() async throws {
-        let app1 = createHost(port: 10_000)
-        let app2 = createHost(port: 10_001)
+        let app1 = try makeClient(port: 10_000)
+        let app2 = try makeClient(port: 10_001)
 
         try await app1.startup()
         try await app2.startup()
@@ -330,8 +330,8 @@ struct LibP2PIdentifyTests {
     }
 
     @Test func testLibP2PInternalPingPeerCascadeMultipleInflightPings() async throws {
-        let app1 = createHost(port: 10_000)
-        let app2 = createHost(port: 10_001)
+        let app1 = try makeClient(port: 10_000)
+        let app2 = try makeClient(port: 10_001)
 
         try await app1.startup()
         try await app2.startup()
@@ -367,8 +367,8 @@ struct LibP2PIdentifyTests {
     }
 
     @Test func testLibP2PInternalPingPeerSequentialPingsUseSameConnection() async throws {
-        let app1 = createHost(port: 10_000)
-        let app2 = createHost(port: 10_001)
+        let app1 = try makeClient(port: 10_000)
+        let app2 = try makeClient(port: 10_001)
 
         try await app1.startup()
         try await app2.startup()
@@ -397,18 +397,107 @@ struct LibP2PIdentifyTests {
         try await app1.asyncShutdown()
         try await app2.asyncShutdown()
     }
+
+    @Test() func testInternalInterop() async throws {
+        let host = try makeEchoHost(port: 10000)
+        let client = try makeClient(port: 10001)
+
+        try await host.startup()
+        try await client.startup()
+
+        let message: Data = "Hello Swift LibP2P".data(using: .utf8)!
+
+        /// Fire off an echo request
+        let response = try await client.newRequest(
+            to: host.listenAddresses.first!.encapsulate(proto: .p2p, address: host.peerID.b58String),
+            forProtocol: "/echo/1.0.0",
+            withRequest: message,
+            withHandlers: .handlers([.newLineDelimited])
+        ).get()
+
+        #expect(response == message)
+
+        try await Task.sleep(for: .milliseconds(10))
+
+        try await host.asyncShutdown()
+        try await client.asyncShutdown()
+    }
+
+    @Test(arguments: [10, 100, 1_000])
+    func testInternalInteropMultipleRequests_Sequentially(_ numberOfRequests: Int) async throws {
+        let host = try makeEchoHost(port: 10000)
+        let client = try makeClient(port: 10001)
+
+        try await host.startup()
+        try await client.startup()
+
+        for _ in 0..<numberOfRequests {
+            /// Fire off an echo request
+            let response = try await client.newRequest(
+                to: host.listenAddresses.first!.encapsulate(proto: .p2p, address: host.peerID.b58String),
+                forProtocol: "/echo/1.0.0",
+                withRequest: "Hello Swift LibP2P".data(using: .utf8)!,
+                withHandlers: .handlers([.newLineDelimited])
+            ).get()
+
+            #expect(response == "Hello Swift LibP2P".data(using: .utf8)!)
+        }
+
+        try await Task.sleep(for: .milliseconds(10))
+
+        let connections = try await host.connectionManager.getTotalConnectionCount().get()
+        let streams = try await host.connectionManager.getTotalStreamCount().get()
+
+        #expect(connections == 1)
+        #expect(streams == numberOfRequests + 2)
+
+        try await host.asyncShutdown()
+        try await client.asyncShutdown()
+    }
 }
 
 extension LibP2PIdentifyTests {
-    fileprivate func createHost(port: Int = 10_000, logLevel: Logger.Level = .notice) -> Application {
-        let host = Application(.testing)
-        host.muxers.use(.mplex)
-        host.security.use(.noise)
-        host.servers.use(.tcp(host: "0.0.0.0", port: port))
+    fileprivate func makeEchoHost(
+        port: Int,
+        peerID: PeerID? = nil,
+        logLevel: Logger.Level = .notice
+    ) throws -> Application {
+        let lib = try Application(.testing, peerID: peerID ?? PeerID(.Ed25519))
+        lib.security.use(.noise)
+        lib.muxers.use(.mplex)
+        lib.servers.use(.tcp(host: "127.0.0.1", port: port))
 
-        host.logger.logLevel = logLevel
+        lib.logger.logLevel = logLevel
 
-        return host
+        lib.routes.group("echo", handlers: [.newLineDelimited]) { echo in
+            echo.on("1.0.0") { req -> Response<ByteBuffer> in
+                switch req.event {
+                case .ready: return .stayOpen
+                case .data(let data): return .respondThenClose(data)
+                case .closed: return .close
+                case .error(let error):
+                    req.logger.error("\(error)")
+                    return .close
+                }
+            }
+        }
+
+        return lib
+    }
+
+    fileprivate func makeClient(
+        port: Int,
+        peerID: PeerID? = nil,
+        logLevel: Logger.Level = .notice
+    ) throws -> Application {
+        let lib = try Application(.testing, peerID: peerID ?? PeerID(.Ed25519))
+        lib.security.use(.noise)
+        lib.muxers.use(.mplex)
+        lib.servers.use(.tcp(host: "127.0.0.1", port: port))
+
+        lib.logger.logLevel = logLevel
+
+        return lib
     }
 }
 
