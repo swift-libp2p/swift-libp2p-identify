@@ -431,26 +431,30 @@ struct LibP2PIdentifyTests {
         try await host.startup()
         try await client.startup()
 
-        // Yamux handles 10_000 requests in ~40 seconds
-        for _ in 0..<numberOfRequests {
-            /// Fire off an echo request
-            let response = try await client.newRequest(
-                to: host.listenAddresses.first!.encapsulate(proto: .p2p, address: host.peerID.b58String),
-                forProtocol: "/echo/1.0.0",
-                withRequest: "Hello Swift LibP2P".data(using: .utf8)!,
-                withHandlers: .handlers([.newLineDelimited])
-            ).get()
+        do {
+            // Yamux handles 10_000 requests in ~40 seconds
+            for _ in 0..<numberOfRequests {
+                /// Fire off an echo request
+                let response = try await client.newRequest(
+                    to: host.listenAddresses.first!.encapsulate(proto: .p2p, address: host.peerID.b58String),
+                    forProtocol: "/echo/1.0.0",
+                    withRequest: "Hello Swift LibP2P".data(using: .utf8)!,
+                    withHandlers: .handlers([.newLineDelimited])
+                ).get()
 
-            #expect(response == "Hello Swift LibP2P".data(using: .utf8)!)
+                #expect(response == "Hello Swift LibP2P".data(using: .utf8)!)
+            }
+
+            try await Task.sleep(for: .milliseconds(10))
+
+            let connections = try await host.connectionManager.getTotalConnectionCount().get()
+            let streams = try await host.connectionManager.getTotalStreamCount().get()
+
+            #expect(connections == 1)
+            #expect(streams == numberOfRequests + 2)
+        } catch {
+            Issue.record(error)
         }
-
-        try await Task.sleep(for: .milliseconds(10))
-
-        let connections = try await host.connectionManager.getTotalConnectionCount().get()
-        let streams = try await host.connectionManager.getTotalStreamCount().get()
-
-        #expect(connections == 1)
-        #expect(streams == numberOfRequests + 2)
 
         try await host.asyncShutdown()
         try await client.asyncShutdown()
