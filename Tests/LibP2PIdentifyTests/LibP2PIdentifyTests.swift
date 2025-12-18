@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-import LibP2PMPLEX
 import LibP2PNoise
 import LibP2PYAMUX
 import Testing
