@@ -14,6 +14,7 @@
 
 import LibP2PMPLEX
 import LibP2PNoise
+import LibP2PYAMUX
 import Testing
 
 @testable import LibP2P
@@ -431,6 +432,7 @@ struct LibP2PIdentifyTests {
         try await host.startup()
         try await client.startup()
 
+        // Yamux handles 10_000 requests in ~40 seconds
         for _ in 0..<numberOfRequests {
             /// Fire off an echo request
             let response = try await client.newRequest(
@@ -464,7 +466,7 @@ extension LibP2PIdentifyTests {
     ) throws -> Application {
         let lib = try Application(.testing, peerID: peerID ?? PeerID(.Ed25519))
         lib.security.use(.noise)
-        lib.muxers.use(.mplex)
+        lib.muxers.use(.yamux)
         lib.servers.use(.tcp(host: "127.0.0.1", port: port))
 
         lib.logger.logLevel = logLevel
@@ -492,7 +494,7 @@ extension LibP2PIdentifyTests {
     ) throws -> Application {
         let lib = try Application(.testing, peerID: peerID ?? PeerID(.Ed25519))
         lib.security.use(.noise)
-        lib.muxers.use(.mplex)
+        lib.muxers.use(.yamux)
         lib.servers.use(.tcp(host: "127.0.0.1", port: port))
 
         lib.logger.logLevel = logLevel
