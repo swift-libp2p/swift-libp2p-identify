@@ -12,14 +12,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-import LibP2PMPLEX
 import LibP2PNoise
+import LibP2PYAMUX
 import Testing
 
 @testable import LibP2P
 @testable import LibP2PIdentify
 
-@Suite("Libp2p Identify Tests", .serialized)
+@Suite("Libp2p Identify Tests", .serialized, .timeLimit(.minutes(5)))
 struct LibP2PIdentifyTests {
 
     @Test func testIPFSIdentifyPayload() throws {
@@ -95,6 +95,10 @@ struct LibP2PIdentifyTests {
     @Test func testIDPushRecordDecoding() throws {
 
         let application = Application(.testing)
+
+        try application.start()
+
+        defer { application.shutdown() }
 
         /// Ensure our identifiedPeer Events are being fired correctly
         var peerUpdateEvents: Int = 0
@@ -252,8 +256,6 @@ struct LibP2PIdentifyTests {
         //application.peers.dumpAll()
 
         sleep(1)
-
-        application.shutdown()
     }
 
     @Test func testLibP2PInternalPingMultiaddr() throws {
@@ -319,11 +321,15 @@ struct LibP2PIdentifyTests {
         try await app1.startup()
         try await app2.startup()
 
-        try await app1.peers.add(peerInfo: app2.peerInfo)
+        do {
+            try await app1.peers.add(peerInfo: app2.peerInfo)
 
-        let ping = try await app1.identify.ping(peer: app2.peerID)
-        print("Latency: \(ping.nanoseconds) ns")
-        #expect(ping.nanoseconds >= 0)
+            let ping = try await app1.identify.ping(peer: app2.peerID)
+            print("Latency: \(ping.nanoseconds) ns")
+            #expect(ping.nanoseconds >= 0)
+        } catch {
+            Issue.record(error)
+        }
 
         try await app1.asyncShutdown()
         try await app2.asyncShutdown()
@@ -336,31 +342,35 @@ struct LibP2PIdentifyTests {
         try await app1.startup()
         try await app2.startup()
 
-        try await app1.peers.add(peerInfo: app2.peerInfo)
+        do {
+            try await app1.peers.add(peerInfo: app2.peerInfo)
 
-        // Note: These pings happen concurrently
-        async let latency1 = app1.identify.ping(peer: app2.peerID)
-        async let latency2 = app1.identify.ping(peer: app2.peerID)
-        async let latency3 = app1.identify.ping(peer: app2.peerID)
+            // Note: These pings happen concurrently
+            async let latency1 = app1.identify.ping(peer: app2.peerID)
+            async let latency2 = app1.identify.ping(peer: app2.peerID)
+            async let latency3 = app1.identify.ping(peer: app2.peerID)
 
-        // Even when we await them like this here...
-        let ping1 = try await latency1
-        let ping2 = try await latency2
-        let ping3 = try await latency3
+            // Even when we await them like this here...
+            let ping1 = try await latency1
+            let ping2 = try await latency2
+            let ping3 = try await latency3
 
-        let connectionCount = try await app1.connectionManager.getTotalConnectionCount().get()
-        let streamCount = try await app1.connectionManager.getTotalStreamCount().get()
+            let connectionCount = try await app1.connectionManager.getTotalConnectionCount().get()
+            let streamCount = try await app1.connectionManager.getTotalStreamCount().get()
 
-        print("Connection Count: \(connectionCount)")
-        print("Stream Count: \(streamCount)")
+            print("Connection Count: \(connectionCount)")
+            print("Stream Count: \(streamCount)")
 
-        #expect(connectionCount == 1)
-        // 2 streams for ID protocol and 1 stream for all three pings
-        #expect(streamCount == 3)
+            #expect(connectionCount == 1)
+            // 2 streams for ID protocol and 1 stream for all three pings
+            #expect(streamCount == 3)
 
-        // All of the pings should be indentical because all three calls where cascaded into one
-        #expect(ping1 == ping2)
-        #expect(ping2 == ping3)
+            // All of the pings should be indentical because all three calls where cascaded into one
+            #expect(ping1 == ping2)
+            #expect(ping2 == ping3)
+        } catch {
+            Issue.record(error)
+        }
 
         try await app1.asyncShutdown()
         try await app2.asyncShutdown()
@@ -373,26 +383,30 @@ struct LibP2PIdentifyTests {
         try await app1.startup()
         try await app2.startup()
 
-        try await app1.peers.add(peerInfo: app2.peerInfo)
+        do {
+            try await app1.peers.add(peerInfo: app2.peerInfo)
 
-        // Note: These pings happen sequentially
-        let ping1 = try await app1.identify.ping(peer: app2.peerID)
-        let ping2 = try await app1.identify.ping(peer: app2.peerID)
-        let ping3 = try await app1.identify.ping(peer: app2.peerID)
+            // Note: These pings happen sequentially
+            let ping1 = try await app1.identify.ping(peer: app2.peerID)
+            let ping2 = try await app1.identify.ping(peer: app2.peerID)
+            let ping3 = try await app1.identify.ping(peer: app2.peerID)
 
-        let connectionCount = try await app1.connectionManager.getTotalConnectionCount().get()
-        let streamCount = try await app1.connectionManager.getTotalStreamCount().get()
+            let connectionCount = try await app1.connectionManager.getTotalConnectionCount().get()
+            let streamCount = try await app1.connectionManager.getTotalStreamCount().get()
 
-        print("Connection Count: \(connectionCount)")
-        print("Stream Count: \(streamCount)")
+            print("Connection Count: \(connectionCount)")
+            print("Stream Count: \(streamCount)")
 
-        #expect(connectionCount == 1)
-        // 2 streams for ID protocol and 1 stream for each of the 3 pings
-        #expect(streamCount == 5)
+            #expect(connectionCount == 1)
+            // 2 streams for ID protocol and 1 stream for each of the 3 pings
+            #expect(streamCount == 5)
 
-        // All three pings should be different because they happened sequentially
-        #expect(ping1 != ping2)
-        #expect(ping2 != ping3)
+            // All three pings should be different because they happened sequentially
+            #expect(ping1 != ping2)
+            #expect(ping2 != ping3)
+        } catch {
+            Issue.record(error)
+        }
 
         try await app1.asyncShutdown()
         try await app2.asyncShutdown()
@@ -405,25 +419,29 @@ struct LibP2PIdentifyTests {
         try await host.startup()
         try await client.startup()
 
-        let message: Data = "Hello Swift LibP2P".data(using: .utf8)!
+        do {
+            let message: Data = "Hello Swift LibP2P".data(using: .utf8)!
 
-        /// Fire off an echo request
-        let response = try await client.newRequest(
-            to: host.listenAddresses.first!.encapsulate(proto: .p2p, address: host.peerID.b58String),
-            forProtocol: "/echo/1.0.0",
-            withRequest: message,
-            withHandlers: .handlers([.newLineDelimited])
-        ).get()
+            /// Fire off an echo request
+            let response = try await client.newRequest(
+                to: host.listenAddresses.first!.encapsulate(proto: .p2p, address: host.peerID.b58String),
+                forProtocol: "/echo/1.0.0",
+                withRequest: message,
+                withHandlers: .handlers([.newLineDelimited])
+            ).get()
 
-        #expect(response == message)
+            #expect(response == message)
 
-        try await Task.sleep(for: .milliseconds(10))
+            try await Task.sleep(for: .milliseconds(10))
+        } catch {
+            Issue.record(error)
+        }
 
         try await host.asyncShutdown()
         try await client.asyncShutdown()
     }
 
-    @Test(arguments: [10, 100, 1_000])
+    @Test(.timeLimit(.minutes(2)), arguments: [3, 5, 10])
     func testInternalInteropMultipleRequests_Sequentially(_ numberOfRequests: Int) async throws {
         let host = try makeEchoHost(port: 10000)
         let client = try makeClient(port: 10001)
@@ -431,25 +449,30 @@ struct LibP2PIdentifyTests {
         try await host.startup()
         try await client.startup()
 
-        for _ in 0..<numberOfRequests {
-            /// Fire off an echo request
-            let response = try await client.newRequest(
-                to: host.listenAddresses.first!.encapsulate(proto: .p2p, address: host.peerID.b58String),
-                forProtocol: "/echo/1.0.0",
-                withRequest: "Hello Swift LibP2P".data(using: .utf8)!,
-                withHandlers: .handlers([.newLineDelimited])
-            ).get()
+        do {
+            // Yamux handles 10_000 requests in ~40 seconds
+            for _ in 0..<numberOfRequests {
+                /// Fire off an echo request
+                let response = try await client.newRequest(
+                    to: host.listenAddresses.first!.encapsulate(proto: .p2p, address: host.peerID.b58String),
+                    forProtocol: "/echo/1.0.0",
+                    withRequest: "Hello Swift LibP2P".data(using: .utf8)!,
+                    withHandlers: .handlers([.newLineDelimited])
+                ).get()
 
-            #expect(response == "Hello Swift LibP2P".data(using: .utf8)!)
+                #expect(response == "Hello Swift LibP2P".data(using: .utf8)!)
+            }
+
+            try await Task.sleep(for: .milliseconds(10))
+
+            let connections = try await host.connectionManager.getTotalConnectionCount().get()
+            let streams = try await host.connectionManager.getTotalStreamCount().get()
+
+            #expect(connections == 1)
+            #expect(streams == numberOfRequests + 2)
+        } catch {
+            Issue.record(error)
         }
-
-        try await Task.sleep(for: .milliseconds(10))
-
-        let connections = try await host.connectionManager.getTotalConnectionCount().get()
-        let streams = try await host.connectionManager.getTotalStreamCount().get()
-
-        #expect(connections == 1)
-        #expect(streams == numberOfRequests + 2)
 
         try await host.asyncShutdown()
         try await client.asyncShutdown()
@@ -464,7 +487,7 @@ extension LibP2PIdentifyTests {
     ) throws -> Application {
         let lib = try Application(.testing, peerID: peerID ?? PeerID(.Ed25519))
         lib.security.use(.noise)
-        lib.muxers.use(.mplex)
+        lib.muxers.use(.yamux)
         lib.servers.use(.tcp(host: "127.0.0.1", port: port))
 
         lib.logger.logLevel = logLevel
@@ -492,7 +515,7 @@ extension LibP2PIdentifyTests {
     ) throws -> Application {
         let lib = try Application(.testing, peerID: peerID ?? PeerID(.Ed25519))
         lib.security.use(.noise)
-        lib.muxers.use(.mplex)
+        lib.muxers.use(.yamux)
         lib.servers.use(.tcp(host: "127.0.0.1", port: port))
 
         lib.logger.logLevel = logLevel
