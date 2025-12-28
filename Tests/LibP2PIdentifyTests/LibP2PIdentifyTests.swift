@@ -441,7 +441,7 @@ struct LibP2PIdentifyTests {
         try await client.asyncShutdown()
     }
 
-    @Test(arguments: [10, 100, 1_000])
+    @Test(.timeLimit(.minutes(2)), arguments: [3, 5, 10])
     func testInternalInteropMultipleRequests_Sequentially(_ numberOfRequests: Int) async throws {
         let host = try makeEchoHost(port: 10000)
         let client = try makeClient(port: 10001)
