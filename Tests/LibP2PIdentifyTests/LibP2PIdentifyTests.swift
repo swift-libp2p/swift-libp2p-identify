@@ -98,6 +98,8 @@ struct LibP2PIdentifyTests {
 
         try application.start()
 
+        defer { application.shutdown() }
+
         /// Ensure our identifiedPeer Events are being fired correctly
         var peerUpdateEvents: Int = 0
         application.events.on(
@@ -254,8 +256,6 @@ struct LibP2PIdentifyTests {
         //application.peers.dumpAll()
 
         sleep(1)
-
-        application.shutdown()
     }
 
     @Test func testLibP2PInternalPingMultiaddr() throws {
