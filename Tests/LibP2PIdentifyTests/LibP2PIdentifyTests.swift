@@ -96,6 +96,8 @@ struct LibP2PIdentifyTests {
 
         let application = Application(.testing)
 
+        try application.start()
+
         /// Ensure our identifiedPeer Events are being fired correctly
         var peerUpdateEvents: Int = 0
         application.events.on(
