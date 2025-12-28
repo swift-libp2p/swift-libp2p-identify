@@ -19,7 +19,7 @@ import Testing
 @testable import LibP2P
 @testable import LibP2PIdentify
 
-@Suite("Libp2p Identify Tests", .serialized)
+@Suite("Libp2p Identify Tests", .serialized, .timeLimit(.minutes(5)))
 struct LibP2PIdentifyTests {
 
     @Test func testIPFSIdentifyPayload() throws {
