@@ -13,7 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 import LibP2PNoise
+import LibP2PTesting
 import LibP2PYAMUX
+import NIOConcurrencyHelpers
 import Testing
 
 @testable import LibP2P
@@ -51,10 +53,8 @@ struct LibP2PIdentifyTests {
         let payload = [UInt8](hex: payloadString)
 
         let lengthPrefix = uVarInt(payload)
-
-        let identifyProto = try? LibP2PIdentify.IdentifyMessage(
-            serializedBytes: payload.dropFirst(lengthPrefix.bytesRead)
-        )
+        let msg = Array(payload.dropFirst(lengthPrefix.bytesRead))
+        let identifyProto = try? LibP2PIdentify.IdentifyMessage(serializedBytes: msg)
 
         #expect(identifyProto != nil)
 
@@ -92,252 +92,212 @@ struct LibP2PIdentifyTests {
         #expect(peerRecord.peerID.b58String == "Qma3GsJmB47xYuyahPZPSadh1avvxfyYQwk8R3UnFrQ6aP")
     }
 
-    @Test func testIDPushRecordDecoding() throws {
+    @Test func testIDPushRecordDecoding() async throws {
+        try await withApp { application in
+            try await application.startup()
 
-        let application = Application(.testing)
-
-        try application.start()
-
-        defer { application.shutdown() }
-
-        /// Ensure our identifiedPeer Events are being fired correctly
-        var peerUpdateEvents: Int = 0
-        application.events.on(
-            application,
-            event: .remotePeerProtocolChange({ _ in
-                peerUpdateEvents += 1
-            })
-        )
-
-        for hexRecord in Fixtures.PushRecords {
-            let payload = [UInt8](hex: hexRecord)
-
-            let identifyProto = try LibP2PIdentify.IdentifyMessage(serializedBytes: payload)
-            let signedEnvelope = try SealedEnvelope(
-                marshaledEnvelope: identifyProto.signedPeerRecord.byteArray,
-                verifiedWithPublicKey: identifyProto.publicKey.byteArray
-            )
-            let peerRecord = try PeerRecord(
-                marshaledData: Data(signedEnvelope.rawPayload),
-                withPublicKey: identifyProto.publicKey
+            /// Ensure our identifiedPeer Events are being fired correctly
+            let peerUpdateEvents = NIOLockedValueBox<Int>(0)
+            application.events.on(
+                application,
+                event: .remotePeerProtocolChange({ _ in
+                    peerUpdateEvents.withLockedValue { $0 += 1 }
+                })
             )
 
-            //print(identifyProto)
-            //print(signedEnvelope)
-            //print(peerRecord)
-            //print((try? Multiaddr(identifyProto.observedAddr)) ?? "NIL")
+            for hexRecord in Fixtures.PushRecords {
+                let payload = [UInt8](hex: hexRecord)
 
-            updateIdentifiedPeerInPeerStore(peerRecord, identifyMessage: identifyProto)
-        }
-
-        func updateIdentifiedPeerInPeerStore(_ peerRecord: PeerRecord, identifyMessage: LibP2PIdentify.IdentifyMessage)
-        {
-            let eventLoop = application.eventLoopGroup.next()
-            let identifiedPeer = peerRecord.peerID
-            guard identifiedPeer != application.peerID else { return }
-
-            var tasks: [EventLoopFuture<Void>] = []
-
-            // This call to add key will only update/upgrade the PeerID in the PeerStore, it wont 'downgrade' an existing PeerID
-            tasks.append(application.peers.add(key: identifiedPeer, on: eventLoop))
-
-            // Update our peers listening addresses
-            let listeningAddresses = identifyMessage.listenAddrs.compactMap { multiaddrData -> Multiaddr? in
-                if let ma = try? Multiaddr(multiaddrData) {
-                    if !ma.protocols().contains(.p2p) {
-                        return try? ma.encapsulate(proto: .p2p, address: identifiedPeer.b58String)
-                    } else {
-                        return ma
-                    }
-                }
-                return nil
-            }
-            tasks.append(application.peers.add(addresses: listeningAddresses, toPeer: identifiedPeer, on: eventLoop))
-
-            // Update our peers known protocols
-            let protocols = identifyMessage.protocols.compactMap { SemVerProtocol($0) }
-            tasks.append(application.peers.add(protocols: protocols, toPeer: identifiedPeer, on: eventLoop))
-
-            // Add the PeerRecord to our Records list
-            tasks.append(application.peers.add(record: peerRecord, on: eventLoop))
-
-            // Update our peers metadata (agent version, protocol version, etc.. maybe include a verified attribute (the signed peer record))
-            //connection.logger.trace("Identify::Adding Metadata to peer \(identifiedPeer.b58String)")
-            //connection.logger.trace("Identify::AgentVersion: \(identifyMessage.agentVersion)")
-            if identifyMessage.hasAgentVersion, let agentVersion = identifyMessage.agentVersion.data(using: .utf8) {
-                tasks.append(
-                    application.peers.add(
-                        metaKey: .AgentVersion,
-                        data: agentVersion.byteArray,
-                        toPeer: identifiedPeer,
-                        on: eventLoop
-                    )
+                let identifyProto = try LibP2PIdentify.IdentifyMessage(serializedBytes: payload)
+                let signedEnvelope = try SealedEnvelope(
+                    marshaledEnvelope: identifyProto.signedPeerRecord.byteArray,
+                    verifiedWithPublicKey: identifyProto.publicKey.byteArray
                 )
-            }
-            //connection.logger.trace("Identify::ProtocolVersion: \(identifyMessage.protocolVersion)")
-            if identifyMessage.hasProtocolVersion,
-                let protocolVersion = identifyMessage.protocolVersion.data(using: .utf8)
-            {
-                tasks.append(
-                    application.peers.add(
-                        metaKey: .ProtocolVersion,
-                        data: protocolVersion.byteArray,
-                        toPeer: identifiedPeer,
-                        on: eventLoop
-                    )
+                let peerRecord = try PeerRecord(
+                    marshaledData: Data(signedEnvelope.rawPayload),
+                    withPublicKey: identifyProto.publicKey
                 )
-            }
-            //connection.logger.trace("Identify::ObservedAddress: \((try? Multiaddr(identifyMessage.observedAddr).description) ?? "NIL")")
-            if identifyMessage.hasObservedAddr,
-                let ma = try? Multiaddr(identifyMessage.observedAddr).description.data(using: .utf8)
-            {
-                tasks.append(
-                    application.peers.add(
-                        metaKey: .ObservedAddress,
-                        data: ma.byteArray,
-                        toPeer: identifiedPeer,
-                        on: eventLoop
-                    )
-                )
-            }
 
-            // -TODO: Our Connection should do this when we complete our security handshake, also we should remove this here...
-            tasks.append(
-                application.peers.add(
-                    metaKey: .LastHandshake,
-                    data: String(Date().timeIntervalSince1970).bytes,
-                    toPeer: identifiedPeer,
-                    on: eventLoop
-                )
-            )
-
-            // Wait for the metadata to be updated then alert the application of the changes...
-            tasks.flatten(on: eventLoop).whenComplete { _ in
-                //print("Identify::Done Adding Metadata to PeerStore. Alerting Application to Remote Peer Protocol Change.")
+                //print(identifyProto)
+                //print(signedEnvelope)
                 //print(peerRecord)
-                application.events.post(
-                    .remotePeerProtocolChange(
-                        RemotePeerProtocolChange(
-                            peer: identifiedPeer,
-                            protocols: protocols,
-                            connection: DummyConnection()
+                //print((try? Multiaddr(identifyProto.observedAddr)) ?? "NIL")
+
+                updateIdentifiedPeerInPeerStore(peerRecord, identifyMessage: identifyProto)
+            }
+
+            func updateIdentifiedPeerInPeerStore(
+                _ peerRecord: PeerRecord,
+                identifyMessage: LibP2PIdentify.IdentifyMessage
+            ) {
+                let eventLoop = application.eventLoopGroup.next()
+                let identifiedPeer = peerRecord.peerID
+                guard identifiedPeer != application.peerID else { return }
+
+                var tasks: [EventLoopFuture<Void>] = []
+
+                // This call to add key will only update/upgrade the PeerID in the PeerStore, it wont 'downgrade' an existing PeerID
+                tasks.append(application.peers.add(key: identifiedPeer, on: eventLoop))
+
+                // Update our peers listening addresses
+                let listeningAddresses = identifyMessage.listenAddrs.compactMap { multiaddrData -> Multiaddr? in
+                    if let ma = try? Multiaddr(multiaddrData) {
+                        if !ma.protocols().contains(.p2p) {
+                            return try? ma.encapsulate(proto: .p2p, address: identifiedPeer.b58String)
+                        } else {
+                            return ma
+                        }
+                    }
+                    return nil
+                }
+                tasks.append(
+                    application.peers.add(addresses: listeningAddresses, toPeer: identifiedPeer, on: eventLoop)
+                )
+
+                // Update our peers known protocols
+                let protocols = identifyMessage.protocols.compactMap { SemVerProtocol($0) }
+                tasks.append(application.peers.add(protocols: protocols, toPeer: identifiedPeer, on: eventLoop))
+
+                // Add the PeerRecord to our Records list
+                tasks.append(application.peers.add(record: peerRecord, on: eventLoop))
+
+                // Update our peers metadata (agent version, protocol version, etc.. maybe include a verified attribute (the signed peer record))
+                //connection.logger.trace("Identify::Adding Metadata to peer \(identifiedPeer.b58String)")
+                //connection.logger.trace("Identify::AgentVersion: \(identifyMessage.agentVersion)")
+                if identifyMessage.hasAgentVersion, let agentVersion = identifyMessage.agentVersion.data(using: .utf8) {
+                    tasks.append(
+                        application.peers.add(
+                            metaKey: .AgentVersion,
+                            data: agentVersion.byteArray,
+                            toPeer: identifiedPeer,
+                            on: eventLoop
                         )
                     )
+                }
+                //connection.logger.trace("Identify::ProtocolVersion: \(identifyMessage.protocolVersion)")
+                if identifyMessage.hasProtocolVersion,
+                    let protocolVersion = identifyMessage.protocolVersion.data(using: .utf8)
+                {
+                    tasks.append(
+                        application.peers.add(
+                            metaKey: .ProtocolVersion,
+                            data: protocolVersion.byteArray,
+                            toPeer: identifiedPeer,
+                            on: eventLoop
+                        )
+                    )
+                }
+                //connection.logger.trace("Identify::ObservedAddress: \((try? Multiaddr(identifyMessage.observedAddr).description) ?? "NIL")")
+                if identifyMessage.hasObservedAddr,
+                    let ma = try? Multiaddr(identifyMessage.observedAddr).description.data(using: .utf8)
+                {
+                    tasks.append(
+                        application.peers.add(
+                            metaKey: .ObservedAddress,
+                            data: ma.byteArray,
+                            toPeer: identifiedPeer,
+                            on: eventLoop
+                        )
+                    )
+                }
+
+                // TODO: Our Connection should do this when we complete our security handshake, also we should remove this here...
+                tasks.append(
+                    application.peers.add(
+                        metaKey: .LastHandshake,
+                        data: String(Date().timeIntervalSince1970).bytes,
+                        toPeer: identifiedPeer,
+                        on: eventLoop
+                    )
                 )
+
+                // Wait for the metadata to be updated then alert the application of the changes...
+                tasks.flatten(on: eventLoop).whenComplete { _ in
+                    //print("Identify::Done Adding Metadata to PeerStore. Alerting Application to Remote Peer Protocol Change.")
+                    //print(peerRecord)
+                    application.events.post(
+                        .remotePeerProtocolChange(
+                            RemotePeerProtocolChange(
+                                peer: identifiedPeer,
+                                protocols: protocols,
+                                connection: DummyConnection()
+                            )
+                        )
+                    )
+                }
             }
+
+            try await Task.sleep(for: .seconds(1))
+
+            print("Added \(Fixtures.PushRecords.count) Push ID Records to our PeerStore")
+            print("Peer Count: \((try? await application.peers.count().get()) ?? -1)")
+            #expect(Fixtures.PushRecords.count == 16)
+            #expect(try await application.peers.count().get() == 7)
+
+            /// Ensure we received the correct number of updates
+            #expect(peerUpdateEvents.withLockedValue { $0 } == 16)
+
+            /// Instantiate a peer from the test fixtures
+            let aRemotePeer = try PeerID(cid: "QmRYiTAVhmPUuE6dnLa2vQGH6pQvUatKJtGFtDRc9bAkeQ")
+            /// Fetch the Records for the remote peer
+            let remotePeerRecords = try await application.peers.getRecords(forPeer: aRemotePeer, on: nil).get()
+            #expect(remotePeerRecords.count > 0)
+            let latestPeerRecord = try await application.peers.getMostRecentRecord(forPeer: aRemotePeer, on: nil).get()
+            #expect(latestPeerRecord?.sequenceNumber == 1_663_285_097_713_605_627)
+
+            /// Trim the Records for the remote peer
+            try await application.peers.trimRecords(forPeer: aRemotePeer, on: nil).get()
+            /// And ensure that the latest Record was kept
+            let remotePeerRecordsAfter = try await application.peers.getRecords(forPeer: aRemotePeer, on: nil).get()
+            #expect(remotePeerRecordsAfter.count == 1)
+            let latestPeerRecordAfter = try await application.peers.getMostRecentRecord(forPeer: aRemotePeer, on: nil)
+                .get()
+            #expect(latestPeerRecordAfter?.sequenceNumber == 1_663_285_097_713_605_627)
+
+            //application.peers.dumpAll()
+
+            try await Task.sleep(for: .seconds(1))
         }
-
-        sleep(1)
-
-        print("Added \(Fixtures.PushRecords.count) Push ID Records to our PeerStore")
-        print("Peer Count: \((try? application.peers.count().wait()) ?? -1)")
-        #expect(Fixtures.PushRecords.count == 16)
-        #expect(try! application.peers.count().wait() == 7)
-
-        /// Ensure we received the correct number of updates
-        #expect(peerUpdateEvents == 16)
-
-        /// Instantiate a peer from the test fixtures
-        let aRemotePeer = try PeerID(cid: "QmRYiTAVhmPUuE6dnLa2vQGH6pQvUatKJtGFtDRc9bAkeQ")
-        /// Fetch the Records for the remote peer
-        let remotePeerRecords = try application.peers.getRecords(forPeer: aRemotePeer, on: nil).wait()
-        #expect(remotePeerRecords.count > 0)
-        let latestPeerRecord = try application.peers.getMostRecentRecord(forPeer: aRemotePeer, on: nil).wait()
-        #expect(latestPeerRecord?.sequenceNumber == 1_663_285_097_713_605_627)
-
-        /// Trim the Records for the remote peer
-        try application.peers.trimRecords(forPeer: aRemotePeer, on: nil).wait()
-        /// And ensure that the latest Record was kept
-        let remotePeerRecordsAfter = try application.peers.getRecords(forPeer: aRemotePeer, on: nil).wait()
-        #expect(remotePeerRecordsAfter.count == 1)
-        let latestPeerRecordAfter = try application.peers.getMostRecentRecord(forPeer: aRemotePeer, on: nil).wait()
-        #expect(latestPeerRecordAfter?.sequenceNumber == 1_663_285_097_713_605_627)
-
-        //application.peers.dumpAll()
-
-        sleep(1)
     }
 
-    @Test func testLibP2PInternalPingMultiaddr() throws {
-        let app1 = try makeClient(port: 10_000)
-        let app2 = try makeClient(port: 10_001)
-
-        defer {
-            app1.shutdown()
-            app2.shutdown()
-        }
-
-        try app1.start()
-        try app2.start()
-
-        let ma = try Multiaddr(app2.listenAddresses.first!.description + "/p2p/" + app2.peerID.b58String)
-
-        let latency = try app1.identify.ping(addr: ma).wait()
-
-        print("Latency: \(latency.nanoseconds) ns")
-        #expect(latency.nanoseconds >= 0)
-    }
-
-    @Test func testLibP2PInternalPingMultiaddr_Async() async throws {
-        let app1 = try makeClient(port: 10_000)
-        let app2 = try makeClient(port: 10_001)
+    @Test func testLibP2PInternalPingMultiaddr() async throws {
+        let app1 = try await makeClient(port: 10_000)
+        let app2 = try await makeClient(port: 10_001)
 
         try await app1.startup()
         try await app2.startup()
 
         let ma = try app2.listenAddresses.first!.encapsulate(proto: .p2p, address: app2.peerID.b58String)
 
-        let ping = try await app1.identify.ping(addr: ma)
-        print("Latency: \(ping.nanoseconds) ns")
-        #expect(ping.nanoseconds >= 0)
+        let latency = try await app1.identify.ping(addr: ma)
+
+        print("Latency: \(latency.nanoseconds) ns")
+        #expect(latency.nanoseconds >= 0)
 
         try await app1.asyncShutdown()
         try await app2.asyncShutdown()
     }
 
-    @Test func testLibP2PInternalPingPeer() throws {
-        let app1 = try makeClient(port: 10_000)
-        let app2 = try makeClient(port: 10_001)
-
-        defer {
-            app1.shutdown()
-            app2.shutdown()
-        }
-
-        try app1.start()
-        try app2.start()
-
-        try app1.peers.add(peerInfo: app2.peerInfo).wait()
-
-        let ping = try app1.identify.ping(peer: app2.peerID).wait()
-        print("Latency: \(ping.nanoseconds) ns")
-        #expect(ping.nanoseconds >= 0)
-    }
-
-    @Test func testLibP2PInternalPingPeer_Async() async throws {
-        let app1 = try makeClient(port: 10_000)
-        let app2 = try makeClient(port: 10_001)
+    @Test func testLibP2PInternalPingPeer() async throws {
+        let app1 = try await makeClient(port: 10_000)
+        let app2 = try await makeClient(port: 10_001)
 
         try await app1.startup()
         try await app2.startup()
 
-        do {
-            try await app1.peers.add(peerInfo: app2.peerInfo)
+        try await app1.peers.add(peerInfo: app2.peerInfo)
 
-            let ping = try await app1.identify.ping(peer: app2.peerID)
-            print("Latency: \(ping.nanoseconds) ns")
-            #expect(ping.nanoseconds >= 0)
-        } catch {
-            Issue.record(error)
-        }
+        let ping = try await app1.identify.ping(peer: app2.peerID)
+        print("Latency: \(ping.nanoseconds) ns")
+        #expect(ping.nanoseconds >= 0)
 
         try await app1.asyncShutdown()
         try await app2.asyncShutdown()
     }
 
     @Test func testLibP2PInternalPingPeerCascadeMultipleInflightPings() async throws {
-        let app1 = try makeClient(port: 10_000)
-        let app2 = try makeClient(port: 10_001)
+        let app1 = try await makeClient(port: 10_000)
+        let app2 = try await makeClient(port: 10_001)
 
         try await app1.startup()
         try await app2.startup()
@@ -377,8 +337,8 @@ struct LibP2PIdentifyTests {
     }
 
     @Test func testLibP2PInternalPingPeerSequentialPingsUseSameConnection() async throws {
-        let app1 = try makeClient(port: 10_000)
-        let app2 = try makeClient(port: 10_001)
+        let app1 = try await makeClient(port: 10_000)
+        let app2 = try await makeClient(port: 10_001)
 
         try await app1.startup()
         try await app2.startup()
@@ -413,8 +373,8 @@ struct LibP2PIdentifyTests {
     }
 
     @Test() func testInternalInterop() async throws {
-        let host = try makeEchoHost(port: 10000)
-        let client = try makeClient(port: 10001)
+        let host = try await makeEchoHost(port: 10000)
+        let client = try await makeClient(port: 10001)
 
         try await host.startup()
         try await client.startup()
@@ -443,8 +403,8 @@ struct LibP2PIdentifyTests {
 
     @Test(.timeLimit(.minutes(2)), arguments: [3, 5, 10])
     func testInternalInteropMultipleRequests_Sequentially(_ numberOfRequests: Int) async throws {
-        let host = try makeEchoHost(port: 10000)
-        let client = try makeClient(port: 10001)
+        let host = try await makeEchoHost(port: 10000)
+        let client = try await makeClient(port: 10001)
 
         try await host.startup()
         try await client.startup()
@@ -482,10 +442,10 @@ struct LibP2PIdentifyTests {
 extension LibP2PIdentifyTests {
     fileprivate func makeEchoHost(
         port: Int,
-        peerID: PeerID? = nil,
+        peerID: KeyPairFile = .ephemeral,
         logLevel: Logger.Level = .notice
-    ) throws -> Application {
-        let lib = try Application(.testing, peerID: peerID ?? PeerID(.Ed25519))
+    ) async throws -> Application {
+        let lib = try await Application.make(.testing, peerID: peerID)
         lib.security.use(.noise)
         lib.muxers.use(.yamux)
         lib.servers.use(.tcp(host: "127.0.0.1", port: port))
@@ -510,10 +470,10 @@ extension LibP2PIdentifyTests {
 
     fileprivate func makeClient(
         port: Int,
-        peerID: PeerID? = nil,
+        peerID: KeyPairFile = .ephemeral,
         logLevel: Logger.Level = .notice
-    ) throws -> Application {
-        let lib = try Application(.testing, peerID: peerID ?? PeerID(.Ed25519))
+    ) async throws -> Application {
+        let lib = try await Application.make(.testing, peerID: peerID)
         lib.security.use(.noise)
         lib.muxers.use(.yamux)
         lib.servers.use(.tcp(host: "127.0.0.1", port: port))
