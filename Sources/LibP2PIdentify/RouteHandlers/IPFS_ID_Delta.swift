@@ -16,7 +16,7 @@ import LibP2P
 
 internal func handleDeltaRequest(_ req: Request) -> Response<ByteBuffer> {
     guard req.streamDirection == .inbound else {
-        req.logger.error("Identify::Delta::Error - We dont support outbound /ipfs/id/delta messages on this handler")
+        req.logger.error("Identify::Delta::Error - We dont support outbound /p2p/id/delta messages on this handler")
         return .close
     }
     switch req.event {
@@ -24,6 +24,9 @@ internal func handleDeltaRequest(_ req: Request) -> Response<ByteBuffer> {
         return .stayOpen
     case .data:
         req.logger.warning("Identify::Delta::We haven't tested this yet!")
+        //req.logger.warning("🚨 Received Delta ID Payload 🚨")
+        //req.logger.warning("\(Data(req.payload.readableBytesView).toHexString())")
+        //req.logger.warning("---------------------")
         handleDeltaMessage(req)
     default:
         break
@@ -32,7 +35,7 @@ internal func handleDeltaRequest(_ req: Request) -> Response<ByteBuffer> {
 }
 
 private func handleDeltaMessage(_ req: Request) {
-    guard let message = try? IdentifyMessage(contiguousBytes: [UInt8](req.payload.readableBytesView)) else {
+    guard let message = try? IdentifyMessage(serializedBytes: [UInt8](req.payload.readableBytesView)) else {
         req.logger.error("Identify::Delta::Failed to decode Delta IdentifyMessage")
         return
     }
@@ -42,23 +45,30 @@ private func handleDeltaMessage(_ req: Request) {
         return
     }
 
+    // Ensure we have a remote peer available
+    guard let remotePeer = req.remotePeer else {
+        req.logger.error("Identify::Delta::Cannot apply delta on an unauthenticated stream")
+        return
+    }
+
     let delta = message.delta
 
-    guard !delta.addedProtocols.isEmpty && !delta.rmProtocols.isEmpty else {
+    // A delta may carry additions only, removals only, or both
+    guard !delta.addedProtocols.isEmpty || !delta.rmProtocols.isEmpty else {
         req.logger.error("Identify::Delta::Empty Delta message, nothing to do...")
         return
     }
 
     var tasks: [EventLoopFuture<Void>] = []
 
-    // Remove old protocols
+    // Remove dropped protocols
     if !delta.rmProtocols.isEmpty {
         tasks.append(
             req.application.peers.remove(
-                protocols: delta.addedProtocols.compactMap {
+                protocols: delta.rmProtocols.compactMap {
                     SemVerProtocol($0)
                 },
-                fromPeer: req.remotePeer!,
+                fromPeer: remotePeer,
                 on: req.eventLoop
             )
         )
@@ -71,7 +81,7 @@ private func handleDeltaMessage(_ req: Request) {
                 protocols: delta.addedProtocols.compactMap {
                     SemVerProtocol($0)
                 },
-                toPeer: req.remotePeer!,
+                toPeer: remotePeer,
                 on: req.eventLoop
             )
         )
@@ -79,7 +89,7 @@ private func handleDeltaMessage(_ req: Request) {
 
     // Get new set of supported protocols
     tasks.flatten(on: req.eventLoop).flatMap { Void -> EventLoopFuture<[SemVerProtocol]> in
-        req.application.peers.getProtocols(forPeer: req.remotePeer!, on: req.eventLoop)
+        req.application.peers.getProtocols(forPeer: remotePeer, on: req.eventLoop)
     }.whenComplete { result in
         switch result {
         case .failure(let error):
@@ -90,7 +100,7 @@ private func handleDeltaMessage(_ req: Request) {
             req.application.events.post(
                 .remotePeerProtocolChange(
                     RemotePeerProtocolChange(
-                        peer: req.remotePeer!,
+                        peer: remotePeer,
                         protocols: protocols,
                         connection: req.connection
                     )
