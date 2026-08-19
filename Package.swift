@@ -30,11 +30,12 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/swift-libp2p/swift-libp2p.git", .upToNextMinor(from: "0.3.0")),
+        
+        .package(url: "https://github.com/swift-libp2p/swift-libp2p.git", .upToNextMinor(from: "0.3.4")),
 
         // Test Dependencies
-        .package(url: "https://github.com/swift-libp2p/swift-libp2p-yamux.git", .upToNextMinor(from: "0.2.1")),
-        .package(url: "https://github.com/swift-libp2p/swift-libp2p-noise.git", .upToNextMinor(from: "0.2.0")),
+        .package(url: "https://github.com/swift-libp2p/swift-libp2p-yamux.git", .upToNextMinor(from: "0.3.0")),
+        .package(url: "https://github.com/swift-libp2p/swift-libp2p-noise.git", .upToNextMinor(from: "0.3.0")),
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -52,6 +53,7 @@ let package = Package(
             name: "LibP2PIdentifyTests",
             dependencies: [
                 "LibP2PIdentify",
+                .product(name: "LibP2PTesting", package: "swift-libp2p"),
                 .product(name: "LibP2PNoise", package: "swift-libp2p-noise"),
                 .product(name: "LibP2PYAMUX", package: "swift-libp2p-yamux"),
             ]
