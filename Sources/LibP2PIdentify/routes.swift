@@ -12,7 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+import Dispatch
 import LibP2P
+import LibP2PCore
+import NIOCore
 
 /// Bi Directional ipfs/id/1.0.0 Handler
 /// Handles the following routes
@@ -35,15 +38,6 @@ func routes(_ app: Application) throws {
                 handleIDRequest(req)
             }
 
-            // Route Group: ipfs/id/delta/...
-            id.group("delta") { delta in
-
-                // Route Endpoint: ipfs/id/delta/1.0.0
-                delta.on("1.0.0") { req -> Response<ByteBuffer> in
-                    handleDeltaRequest(req)
-                }
-            }
-
             // Route Group: ipfs/id/push/...
             id.group("push") { push in
 
@@ -60,6 +54,27 @@ func routes(_ app: Application) throws {
             // Route Enpoint: /ipfs/ping/1.0.0
             ping.on("1.0.0") { req -> Response<ByteBuffer> in
                 handlePingRequest(req)
+            }
+        }
+    }
+
+    app.group("p2p") { p2p in
+
+        // Route group: p2p/id/...
+        // Handlers: .varIntLengthPrefix is applied to all routes within `id`
+        p2p.group("id", handlers: [.varIntLengthPrefixed]) { id in
+
+            // Route Group: p2p/id/delta/...
+            // NOTE: The delta message has been removed from current go-libp2p, so delta
+            // is legacy. We still register the handler to accept inbound deltas, but we
+            // filter it out of our advertised protocol list in `constructIdentifyMessage`.
+            // The modern replacement is identify/push.
+            id.group("delta") { delta in
+
+                // Route Endpoint: p2p/id/delta/1.0.0
+                delta.on("1.0.0") { req -> Response<ByteBuffer> in
+                    handleDeltaRequest(req)
+                }
             }
         }
     }
