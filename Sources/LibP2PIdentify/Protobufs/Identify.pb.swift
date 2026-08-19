@@ -21,7 +21,64 @@
 // For information on using the generated types, please see the documentation:
 //   https://github.com/apple/swift-protobuf/
 
+//// There are two variations of the identify protocol, identify and
+//// identify/push. 1) identify
+////     The identify protocol has the protocol id /ipfs/id/1.0.0, and it is used
+////     to query remote peers for their information. The protocol works by
+////     opening a stream to the remote peer you want to query, using
+////     /ipfs/id/1.0.0 as the protocol id string. The peer being identified
+////     responds by returning an Identify message and closes the stream.
+//// 2) identify/push
+////     The identify/push protocol has the protocol id /ipfs/id/push/1.0.0, and
+////     it is used to inform known peers about changes that occur at runtime.
+////     When a peer's basic information changes, for example, because they've
+////     obtained a new public listen address, they can use identify/push to
+////     inform others about the new information. The push variant works by
+////     opening a stream to each remote peer you want to update, using
+////     /ipfs/id/push/1.0.0 as the protocol id string. When the remote peer
+////     accepts the stream, the local peer will send an Identify message and
+////     close the stream. Upon recieving the pushed Identify message, the remote
+////     peer should update their local metadata repository with the information
+////     from the message. Note that missing fields should be ignored, as peers
+////     may choose to send partial updates containing only the fields whose
+////     values have changed.
+////
+////  Parameters
+////
+////  - protocolVersion
+////
+////     The protocol version identifies the family of protocols used by the
+////     peer. The current protocol version is ipfs/0.1.0; if the protocol major
+////     or minor version does not match the protocol used by the initiating
+////     peer, then the connection is considered unusable and the peer must close
+////     the connection.
+////  - agentVersion
+////     This is a free-form string, identifying the implementation of the peer.
+////     The usual format is agent-name/version, where agent-name is the name of
+////     the program or library and version is its semantic version.
+////  - publicKey
+////     This is the public key of the peer, marshalled in binary form as
+////     specicfied in peer-ids.
+////  - listenAddrs
+////     These are the addresses on which the peer is listening as
+////     multi-addresses.
+////  - observedAddr
+////     This is the connection source address of the stream initiating peer as
+////     observed by the peer being identified; it is a multi-address. The
+////     initiator can use this address to infer the existence of a NAT and its
+////     public address. For example, in the case of a TCP/IP transport the
+////     observed addresses will be of the form /ip4/x.x.x.x/tcp/xx. In the case
+////     of a circuit relay connection, the observed address will be of the form
+////     /p2p/QmRelay/p2p-circuit. In the case of onion transport, there is no
+////     observable source address.
+////  - protocols
+////     This is a list of protocols supported by the peer.
+
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
 import SwiftProtobuf
 
 // If the compiler emits an error on this type, it is because this file
@@ -57,22 +114,22 @@ struct IdentifyMessage: Sendable {
 
   /// protocolVersion determines compatibility between peers
   var protocolVersion: String {
-    get {return _protocolVersion ?? String()}
+    get {_protocolVersion ?? String()}
     set {_protocolVersion = newValue}
   }
   /// Returns true if `protocolVersion` has been explicitly set.
-  var hasProtocolVersion: Bool {return self._protocolVersion != nil}
+  var hasProtocolVersion: Bool {self._protocolVersion != nil}
   /// Clears the value of `protocolVersion`. Subsequent reads from it will return its default value.
   mutating func clearProtocolVersion() {self._protocolVersion = nil}
 
   /// agentVersion is like a UserAgent string in browsers, or client version in
   /// bittorrent includes the client name and client.
   var agentVersion: String {
-    get {return _agentVersion ?? String()}
+    get {_agentVersion ?? String()}
     set {_agentVersion = newValue}
   }
   /// Returns true if `agentVersion` has been explicitly set.
-  var hasAgentVersion: Bool {return self._agentVersion != nil}
+  var hasAgentVersion: Bool {self._agentVersion != nil}
   /// Clears the value of `agentVersion`. Subsequent reads from it will return its default value.
   mutating func clearAgentVersion() {self._agentVersion = nil}
 
@@ -80,11 +137,11 @@ struct IdentifyMessage: Sendable {
   /// - may not need to be sent, as secure channel implies it has been sent.
   /// - then again, if we change / disable secure channel, may still want it.
   var publicKey: Data {
-    get {return _publicKey ?? Data()}
+    get {_publicKey ?? Data()}
     set {_publicKey = newValue}
   }
   /// Returns true if `publicKey` has been explicitly set.
-  var hasPublicKey: Bool {return self._publicKey != nil}
+  var hasPublicKey: Bool {self._publicKey != nil}
   /// Clears the value of `publicKey`. Subsequent reads from it will return its default value.
   mutating func clearPublicKey() {self._publicKey = nil}
 
@@ -97,11 +154,11 @@ struct IdentifyMessage: Sendable {
   /// helps the remote endpoint determine whether its connection to the local
   /// peer goes through NAT.
   var observedAddr: Data {
-    get {return _observedAddr ?? Data()}
+    get {_observedAddr ?? Data()}
     set {_observedAddr = newValue}
   }
   /// Returns true if `observedAddr` has been explicitly set.
-  var hasObservedAddr: Bool {return self._observedAddr != nil}
+  var hasObservedAddr: Bool {self._observedAddr != nil}
   /// Clears the value of `observedAddr`. Subsequent reads from it will return its default value.
   mutating func clearObservedAddr() {self._observedAddr = nil}
 
@@ -111,11 +168,11 @@ struct IdentifyMessage: Sendable {
   /// a delta update is incompatible with everything else. If this field is
   /// included, none of the others can appear.
   var delta: Delta {
-    get {return _delta ?? Delta()}
+    get {_delta ?? Delta()}
     set {_delta = newValue}
   }
   /// Returns true if `delta` has been explicitly set.
-  var hasDelta: Bool {return self._delta != nil}
+  var hasDelta: Bool {self._delta != nil}
   /// Clears the value of `delta`. Subsequent reads from it will return its default value.
   mutating func clearDelta() {self._delta = nil}
 
@@ -127,11 +184,11 @@ struct IdentifyMessage: Sendable {
   /// github.com/libp2p/go-libp2p-core/peer/pb/peer_record.proto for message
   /// definitions.
   var signedPeerRecord: Data {
-    get {return _signedPeerRecord ?? Data()}
+    get {_signedPeerRecord ?? Data()}
     set {_signedPeerRecord = newValue}
   }
   /// Returns true if `signedPeerRecord` has been explicitly set.
-  var hasSignedPeerRecord: Bool {return self._signedPeerRecord != nil}
+  var hasSignedPeerRecord: Bool {self._signedPeerRecord != nil}
   /// Clears the value of `signedPeerRecord`. Subsequent reads from it will return its default value.
   mutating func clearSignedPeerRecord() {self._signedPeerRecord = nil}
 
